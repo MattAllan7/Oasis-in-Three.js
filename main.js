@@ -1,6 +1,15 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { degToRad } from 'three/src/math/MathUtils.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { degToRad, randFloat } from 'three/src/math/MathUtils.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Loaders >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+const mtlLoader = new MTLLoader();
+const objLoader = new OBJLoader();
+const gltfLoader = new GLTFLoader();
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Scene >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -15,6 +24,7 @@ camera.position.set( 0, 500, 0 );
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement );
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camera Controls >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
@@ -86,6 +96,125 @@ groundMesh.position.set(0, 0, 0);
 groundMesh.rotateX(degToRad(-90));
 
 scene.add(groundMesh);
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Water >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+// Water plane
+const waterWidth = 128;
+const waterHeight = 128;
+const waterWidthSeg = 1; 
+const waterHeightSeg = 1;
+const waterGeo = new THREE.PlaneGeometry(
+  waterWidth, 
+  waterHeight, 
+  waterWidthSeg, 
+  waterHeightSeg
+);
+
+// Water material
+const waterColor = new THREE.Color(0x65B6C7)
+const waterMat = new THREE.MeshStandardMaterial({
+  color: waterColor, 
+  transparent: true, 
+  opacity: 0.75, 
+  side: THREE.DoubleSide,
+});
+
+// Water mesh
+const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+waterMesh.rotateX(degToRad(-90));
+waterMesh.position.set(0, 17, 0);
+scene.add(waterMesh);
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+const cactusMaterial = await mtlLoader.loadAsync("models/Cactus/cactus.mtl");
+cactusMaterial.preload();
+
+objLoader.setMaterials(cactusMaterial);
+const cactusOBJ = await objLoader.loadAsync("models/Cactus/cactus.obj");
+
+cactusOBJ.scale.set(2, 2, 2);
+
+const cacti = [
+  {x: -400, y: 35, z: -400},
+  {x: -100, y: 28, z: -300},
+  {x: 250, y: 26, z: -450},
+  {x: 350, y: 33, z: -100},
+  {x: 300, y: 25, z: 150},
+  {x: 150, y: 27, z: 300},
+  {x: 375, y: 33, z: 375},
+  {x: -100, y: 33, z: 350},
+  {x: -300, y: 25, z: 200},
+  {x: -400, y: 21, z: 25},
+  {x: -250, y: 15, z: -100},
+]
+
+cacti.forEach(cactus => {
+  createCactus(cactus.x, cactus.y, cactus.z);
+});
+
+function createCactus(x, y, z) {
+  let cactus = cactusOBJ.clone();
+  cactus.position.set(x, y, z);
+
+  cactus.rotateY(degToRad(randFloat(0, 360)));
+  
+  scene.add(cactus);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Trees >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+const treeGLTF = await gltfLoader.loadAsync("models/PalmTree.glb");
+treeGLTF.scene.scale.set(4, 4, 4);
+
+const trees = [
+  {x: 50, y:18, z:50, r: 45},
+  {x: -70, y:18, z:10, r: 270},
+  {x: 20, y:18, z:-65, r: 150},
+];
+
+trees.forEach(tree => {
+  createTree(tree.x, tree.y, tree.z, tree.r);
+});
+
+function createTree(x, y, z, r) {
+  let tree = treeGLTF.scene.clone();
+  tree.position.set(x, y, z);
+
+  tree.rotateY(degToRad(r));
+
+  scene.add(tree);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Rocks >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+const rockGLTF = await gltfLoader.loadAsync("models/Rock.glb");
+
+const rocks = [
+  {x: 75, y: 20, z: 25},
+  {x: 45, y: 20, z: -55},
+  {x: -25, y: 20, z: -75},
+  {x: -65, y: 20, z: -20},
+  {x: -75, y: 20, z: 0},
+  {x: -45, y: 20, z: 55},
+];
+
+rocks.forEach(rock => {
+  createRock(rock.x, rock.y, rock.z);
+});
+
+function createRock(x, y, z) {
+  let rock = rockGLTF.scene.clone();
+  rock.position.set(x, y, z);
+
+  const rockScale = randFloat(2, 4);
+  rock.scale.set(rockScale, rockScale, rockScale);
+
+  rock.rotateY(degToRad(randFloat(0, 360)));
+
+  scene.add(rock);
+}
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Animate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
