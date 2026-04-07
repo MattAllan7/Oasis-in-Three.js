@@ -25,29 +25,31 @@ const orbitControls = new OrbitControls( camera, renderer.domElement );
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 const sunlightColor = new THREE.Color(0xffffff);
-const sunlightIntensity = 1;
+const sunlightIntensity = 4;
 let sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
-sunlight.position.set(100, 100, 100);
-sunlight.lookAt(0, 0, 0);
+sunlight.position.set(2000, 800, 0);
 scene.add(sunlight);
+// const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
+// scene.add(sunlightHelper);
 
-const ambientColor = new THREE.Color(0xffffff);
+const ambientColor = new THREE.Color(0xD68142);
 const ambientIntensity = 0.1;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
-// scene.add(ambientLight);
+scene.add(ambientLight);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Ground >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 const textureLoader = new THREE.TextureLoader();
 
 // Height map logic from: https://www.youtube.com/watch?v=wULUAhckH9w. 
-// Height map image from: https://www.deviantart.com/elmininostock/art/Sand-Dunes-Height-Map-seamless-591456783 
+// Height map image from: https://www.deviantart.com/elmininostock/art/Sand-Dunes-Height-Map-seamless-591456783. 
+// Sand texture from: https://texturelabs.org/textures/soil_126/. 
 
 // Ground geometry
-const groundWidth = 4096;
-const groundHeight = 4096;
-const groundWidthSeg = 256; 
-const groundHeightSeg = 256;
+const groundWidth = 1024;
+const groundHeight = 1024;
+const groundWidthSeg = 128; 
+const groundHeightSeg = 128;
 const groundGeo = new THREE.PlaneGeometry(
   groundWidth, 
   groundHeight, 
@@ -56,13 +58,26 @@ const groundGeo = new THREE.PlaneGeometry(
 );
 
 // Ground material
-let heightMap = textureLoader.load("./images/heightMap.png");
+const groundColor = new THREE.Color(0xBDA264);
+
+let sandTexture = textureLoader.load("./images/sandTexture.png");
+sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
+sandTexture.repeat.set(8, 8);
+sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+let displacementMap = textureLoader.load("./images/heightMap.png");
+const displacementScale = 80;
+
+let normalMap = textureLoader.load("./images/normalMap.jpg");
 
 const groundMat = new THREE.MeshStandardMaterial({
-  color: 0xffcc00, 
-  wireframe: true, 
-  displacementMap: heightMap, 
-  displacementScale: 400,
+  color: groundColor, 
+  map: sandTexture,
+  displacementMap: displacementMap, 
+  displacementScale: displacementScale,
+  normalMap: normalMap,
+  side: THREE.DoubleSide,
+  wireframe: false, 
 });
 
 // Ground mesh
@@ -71,14 +86,6 @@ groundMesh.position.set(0, 0, 0);
 groundMesh.rotateX(degToRad(-90));
 
 scene.add(groundMesh);
-
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< temp >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-
-const geo = new THREE.BoxGeometry(1, 1, 1);
-const mat = new THREE.MeshBasicMaterial(0xffffff);
-const mesh = new THREE.Mesh(geo, mat);
-mesh.position.set(0, 0, 0);
-scene.add(mesh);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Animate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
