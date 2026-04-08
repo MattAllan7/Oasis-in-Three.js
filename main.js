@@ -25,7 +25,9 @@ camera.position.set( 0, 500, 0 );
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-document.body.appendChild(renderer.domElement );
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camera Controls >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -34,14 +36,29 @@ const orbitControls = new OrbitControls( camera, renderer.domElement );
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
-const sunlightColor = new THREE.Color(0xffffff);
-const sunlightIntensity = 4;
-let sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
-sunlight.position.set(2000, 800, 0);
-scene.add(sunlight);
-// const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
-// scene.add(sunlightHelper);
+// Sunlight
+const sunlightColor = new THREE.Color(0xF5E5C1);
+const sunlightIntensity = 3;
+const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
+sunlight.position.set(200, 500, 800);
 
+// Shadows
+sunlight.castShadow = true;
+sunlight.shadow.mapSize.width = 1024;
+sunlight.shadow.mapSize.height = 1024;
+sunlight.shadow.camera.top = 600;
+sunlight.shadow.camera.bottom = -600;
+sunlight.shadow.camera.left = -600;
+sunlight.shadow.camera.right = 600;
+sunlight.shadow.camera.far = 2048;
+sunlight.shadow.camera.updateProjectionMatrix();
+
+scene.add(sunlight);
+
+const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
+scene.add(sunlightHelper);
+
+// Ambient light
 const ambientColor = new THREE.Color(0xD68142);
 const ambientIntensity = 0.1;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
@@ -68,15 +85,15 @@ const groundGeo = new THREE.PlaneGeometry(
 );
 
 // Ground material
-const groundColor = new THREE.Color(0xBDA264);
+const groundColor = new THREE.Color(0xCCB681);
 
-let sandTexture = textureLoader.load("./images/sandTexture.png");
+const sandTexture = textureLoader.load("./images/sandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
 sandTexture.repeat.set(8, 8);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 let displacementMap = textureLoader.load("./images/heightMap.png");
-const displacementScale = 80;
+let displacementScale = 80;
 
 let normalMap = textureLoader.load("./images/normalMap.jpg");
 
@@ -93,6 +110,7 @@ const groundMat = new THREE.MeshStandardMaterial({
 // Ground mesh
 const groundMesh = new THREE.Mesh(groundGeo, groundMat);
 groundMesh.position.set(0, 0, 0);
+groundMesh.receiveShadow = true;
 groundMesh.rotateX(degToRad(-90));
 
 scene.add(groundMesh);
@@ -122,6 +140,7 @@ const waterMat = new THREE.MeshStandardMaterial({
 
 // Water mesh
 const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+waterMesh.receiveShadow = false;
 waterMesh.rotateX(degToRad(-90));
 waterMesh.position.set(0, 17, 0);
 scene.add(waterMesh);
@@ -140,7 +159,7 @@ const cacti = [
   {x: -400, y: 35, z: -400},
   {x: -100, y: 28, z: -300},
   {x: 250, y: 26, z: -450},
-  {x: 350, y: 33, z: -100},
+  {x: 350, y: 20, z: -50},
   {x: 300, y: 25, z: 150},
   {x: 150, y: 27, z: 300},
   {x: 375, y: 33, z: 375},
@@ -156,9 +175,17 @@ cacti.forEach(cactus => {
 
 function createCactus(x, y, z) {
   let cactus = cactusOBJ.clone();
-  cactus.position.set(x, y, z);
 
+  cactus.position.set(x, y, z);
   cactus.rotateY(degToRad(randFloat(0, 360)));
+
+  // Shadows
+  cactus.traverse((child) => {
+    if (child.isMesh) {
+      child.receiveShadow = true;
+      child.castShadow = true;
+    }
+  });
   
   scene.add(cactus);
 }
@@ -180,9 +207,17 @@ trees.forEach(tree => {
 
 function createTree(x, y, z, r) {
   let tree = treeGLTF.scene.clone();
-  tree.position.set(x, y, z);
 
+  tree.position.set(x, y, z);
   tree.rotateY(degToRad(r));
+
+  // Shadows
+  tree.traverse((child) => {
+    if (child.isMesh) {
+      child.receiveShadow = true;
+      child.castShadow = true;
+    }
+  });
 
   scene.add(tree);
 }
@@ -206,12 +241,19 @@ rocks.forEach(rock => {
 
 function createRock(x, y, z) {
   let rock = rockGLTF.scene.clone();
-  rock.position.set(x, y, z);
 
+  rock.position.set(x, y, z);
+  rock.rotateY(degToRad(randFloat(0, 360)));
   const rockScale = randFloat(2, 4);
   rock.scale.set(rockScale, rockScale, rockScale);
 
-  rock.rotateY(degToRad(randFloat(0, 360)));
+  // Shadows
+  rock.traverse((child) => {
+    if (child.isMesh) {
+      child.receiveShadow = true;
+      child.castShadow = true;
+    }
+  });
 
   scene.add(rock);
 }
