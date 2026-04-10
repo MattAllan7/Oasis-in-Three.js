@@ -4,6 +4,7 @@ import { degToRad, randFloat } from 'three/src/math/MathUtils.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { PI } from 'three/tsl';
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Loaders >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -17,8 +18,8 @@ const scene = new THREE.Scene();
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camera >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 10000 );
-camera.position.set( 0, 500, 0 );
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+camera.position.set(0, 200, 200);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Renderer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -37,7 +38,7 @@ const orbitControls = new OrbitControls( camera, renderer.domElement );
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 // Sunlight
-const sunlightColor = new THREE.Color(0xF5E5C1);
+const sunlightColor = new THREE.Color(0xF5E5C1); // Beach sand color 
 const sunlightIntensity = 3;
 const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
 sunlight.position.set(200, 500, 800);
@@ -59,7 +60,7 @@ const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
 scene.add(sunlightHelper);
 
 // Ambient light
-const ambientColor = new THREE.Color(0xD68142);
+const ambientColor = new THREE.Color(0xD68142); // Orange
 const ambientIntensity = 0.1;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
 scene.add(ambientLight);
@@ -81,7 +82,7 @@ const groundGeo = new THREE.PlaneGeometry(
   groundWidth, 
   groundHeight, 
   groundWidthSeg, 
-  groundHeightSeg
+  groundHeightSeg,
 );
 
 // Ground material
@@ -147,15 +148,17 @@ scene.add(waterMesh);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
+// MTL
 const cactusMaterial = await mtlLoader.loadAsync("models/Cactus/cactus.mtl");
 cactusMaterial.preload();
 
+// OBJ
 objLoader.setMaterials(cactusMaterial);
 const cactusOBJ = await objLoader.loadAsync("models/Cactus/cactus.obj");
-
 cactusOBJ.scale.set(2, 2, 2);
 
-const cacti = [
+// Coordinates
+const cactusCoordinates = [
   {x: -400, y: 35, z: -400},
   {x: -100, y: 28, z: -300},
   {x: 250, y: 26, z: -450},
@@ -169,10 +172,20 @@ const cacti = [
   {x: -250, y: 15, z: -100},
 ]
 
-cacti.forEach(cactus => {
-  createCactus(cactus.x, cactus.y, cactus.z);
+cactusCoordinates.forEach(coord => {
+  let cactus = createCactus(coord.x, coord.y, coord.z);
+  scene.add(cactus);
 });
 
+/**
+ * Creates a clone of a tree .obj model and sets the position 
+ * to the specified (x, y, z) coordinate. 
+ * 
+ * @param {number} x The x-position relative to the world. 
+ * @param {number} y The y-position relative to the world. 
+ * @param {number} z The z-position relative to the world. 
+ * @returns A cactus mesh at the desired position. 
+ */
 function createCactus(x, y, z) {
   let cactus = cactusOBJ.clone();
 
@@ -187,7 +200,7 @@ function createCactus(x, y, z) {
     }
   });
   
-  scene.add(cactus);
+  return cactus;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Trees >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
@@ -195,20 +208,35 @@ function createCactus(x, y, z) {
 const treeGLTF = await gltfLoader.loadAsync("models/PalmTree.glb");
 treeGLTF.scene.scale.set(4, 4, 4);
 
-const trees = [
+const treeCoordinates = [
   {x: 50, y:18, z:50, r: 45},
   {x: -70, y:18, z:10, r: 270},
   {x: 20, y:18, z:-65, r: 150},
 ];
 
-trees.forEach(tree => {
-  createTree(tree.x, tree.y, tree.z, tree.r);
+treeCoordinates.forEach(coord => {
+  let tree = createTree(coord.x, coord.y, coord.z, coord.r);
+  scene.add(tree);
 });
 
+/**
+ * Creates a clone of a tree .glb model and sets the position 
+ * to the specified (x, y, z) coordinate. 
+ * A specified y-rotation 'r' is also applied. 
+ * 
+ * @param {number} x The x-position relative to the world. 
+ * @param {number} y The y-position relative to the world. 
+ * @param {number} z The z-position relative to the world. 
+ * @param {number} r The amount to rotate around the y-axis by (in degrees). 
+ * @returns A tree mesh at the desired position and of the desired rotation. 
+ */
 function createTree(x, y, z, r) {
   let tree = treeGLTF.scene.clone();
 
+  // Position 
   tree.position.set(x, y, z);
+
+  // Rotation 
   tree.rotateY(degToRad(r));
 
   // Shadows
@@ -219,14 +247,14 @@ function createTree(x, y, z, r) {
     }
   });
 
-  scene.add(tree);
+  return tree;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Rocks >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 const rockGLTF = await gltfLoader.loadAsync("models/Rock.glb");
 
-const rocks = [
+const rockCoordinates = [
   {x: 75, y: 20, z: 25},
   {x: 45, y: 20, z: -55},
   {x: -25, y: 20, z: -75},
@@ -235,16 +263,37 @@ const rocks = [
   {x: -45, y: 20, z: 55},
 ];
 
-rocks.forEach(rock => {
-  createRock(rock.x, rock.y, rock.z);
+rockCoordinates.forEach(coord => {
+  let rock = createRock(coord.x, coord.y, coord.z);
+  scene.add(rock);
 });
 
+/**
+ * Creates a clone of a rock .glb model and sets the position 
+ * to the specified (x, y, z) coordinate. 
+ * A random y-rotation is also applied, as well as a random scale. 
+ * 
+ * @param {number} x The x-position relative to the world. 
+ * @param {number} y The y-position relative to the world.  
+ * @param {number} z The z-position relative to the world. 
+ * @returns A rock mesh at the desired position. 
+ */
 function createRock(x, y, z) {
   let rock = rockGLTF.scene.clone();
 
+  // Position
   rock.position.set(x, y, z);
-  rock.rotateY(degToRad(randFloat(0, 360)));
-  const rockScale = randFloat(2, 4);
+
+  // Rotation
+  let minRotation = 0;
+  let maxRotation = 360;
+  let rotation = degToRad(randFloat(minRotation, maxRotation));
+  rock.rotateY(rotation);
+
+  // Scale
+  let minScale = 2;
+  let maxScale = 4;
+  let rockScale = randFloat(minScale, maxScale);
   rock.scale.set(rockScale, rockScale, rockScale);
 
   // Shadows
@@ -255,15 +304,152 @@ function createRock(x, y, z) {
     }
   });
 
-  scene.add(rock);
+  return rock;
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Fish >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+const fishCoordinates = [
+  // Top 3x3
+  {x: -2, y: 2, z: -4},
+  {x: 0, y: 4, z: -2},
+  {x: 2, y: 2, z: -4},
+  {x: -3, y: 2, z: 0},
+  {x: 0, y: 2, z: 0},
+  {x: 3, y: 2, z: 0},
+  {x: -2, y: 2, z: 4},
+  {x: 0, y: 4, z: 2},
+  {x: 2, y: 2, z: 4},
+  
+  // Middle 3x3
+  {x: -3, y: 0, z: -3},
+  {x: 0, y: 0, z: -6},
+  {x: 3, y: 0, z: -3},
+  {x: -4, y: 0, z: 0},
+  // {x: 0, y: 0, z: 0},
+  {x: 4, y: 0, z: 0},
+  {x: -3, y: 0, z: 3},
+  {x: 0, y: 0, z: 6},
+  {x: 3, y: 0, z: 3},
+
+  // Bottom 3x3
+  {x: -2, y: -2, z: -4},
+  {x: 0, y: -4, z: -2},
+  {x: 2, y: -2, z: -4},
+  {x: -3, y: -2, z: 0},
+  {x: 0, y: -2, z: 0},
+  {x: 3, y: -2, z: 0},
+  {x: -2, y: -2, z: 4},
+  {x: 0, y: -4, z: 2},
+  {x: 2, y: -2, z: 4},
+];
+
+const school = createSchool();
+translateToPerimeter(school);
+scene.add(school);
+
+/**
+ * Defines fish a geometry and material, 
+ * and calls createFish() for each entry in fishPositions. 
+ * 
+ * @returns A group/school of fish. 
+ */
+function createSchool() {
+  const school = new THREE.Group();
+
+  const fishGeo = new THREE.BoxGeometry(1, 1, 2);
+
+  const fishMatColor = new THREE.Color(0xD68142);
+  const fishMat = new THREE.MeshStandardMaterial(fishMatColor);
+
+  fishCoordinates.forEach(coord => {
+    school.add(createFish(fishGeo, fishMat, coord.x, coord.y, coord.z));
+  });
+
+  return school;
+}
+
+/**
+ * Creates a mesh from a geometry and material and sets the mesh's position 
+ * to the specified (x, y, z) coordinate. 
+ * 
+ * @param {THREE.BoxGeometry} geometry Fish geometry. 
+ * @param {THREE.MeshStandardMaterial} material Fish material. 
+ * @param {number} x The x-position relative to the school. 
+ * @param {number} y The y-position relative to the school. 
+ * @param {number} z The z-position relative to the school. 
+ * @returns A fish mesh at the desired position. 
+ */
+function createFish(geometry, material, x, y, z) {
+  let fishMesh = new THREE.Mesh(geometry, material);
+
+  // Position
+  fishMesh.position.set(x, y, z);
+
+  return fishMesh;
+}
+
+/**
+ * Translates each fish in a school to the perimeter of the water. 
+ */
+function translateToPerimeter() {
+  let xOffset = 35;
+  let yOffset = 8;
+
+  school.children.forEach((fish) => {
+    let curPos = fish.position;
+    fish.position.set(
+      curPos.x + xOffset, 
+      curPos.y + yOffset, 
+      curPos.z);
+  });
+}
+
+/**
+ * Applies a y-rotation to a group. 
+ * Children of the group should be offest for the desired effect. 
+ * Called in the animate function. 
+ * 
+ * @param {number} speed The amount to rotate by. 
+ */
+function rotateSchool(speed) {
+  school.rotateY(speed);
+}
+
+/**
+ * Alters the y-rotation of each individual fish in the school 
+ * through a sin function. 
+ * Each fish's swim timing is slightly offset. 
+ * Inspiration from user Mugen87 at:
+ *    https://stackoverflow.com/questions/60074696/how-to-animate-in-oscillation-a-n-surface-in-three-js
+ * 
+ * @param {number} speed Controls how fast the fish wobble. 
+ */
+function swim(speed) {
+  let rotateClamp = Math.PI / 8
+  
+  school.children.forEach((fish, index) => {
+    let swimmingOffset = index / 10; // So siwmming (wobbling) is not synchronized. 
+    fish.rotation.y = Math.sin(speed + swimmingOffset) * rotateClamp;
+  });
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Animate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
+const timer = new THREE.Timer();
+
 function animate() {
   requestAnimationFrame(animate);
 
-  orbitControls.update();
+  orbitControls.update(); // Temporary
+
+  timer.update();
+
+  let fishOrbitSpeed = 10;
+  rotateSchool(degToRad(fishOrbitSpeed * timer.getDelta()));
+  
+  let fishSwimSpeed = 20;
+  swim(fishSwimSpeed * timer.getElapsed());
 
   render();
 }
