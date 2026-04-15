@@ -4,7 +4,8 @@ import { degToRad, randFloat } from 'three/src/math/MathUtils.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PI } from 'three/tsl';
+import { Water } from 'three/addons/objects/Water.js';
+import { alphaT } from 'three/tsl';
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Loaders >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -44,6 +45,7 @@ const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
 sunlight.position.set(200, 500, 800);
 
 // Shadows
+// From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
 sunlight.castShadow = true;
 sunlight.shadow.mapSize.width = 1024;
 sunlight.shadow.mapSize.height = 1024;
@@ -117,34 +119,40 @@ groundMesh.rotateX(degToRad(-90));
 scene.add(groundMesh);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Water >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+// Water logic from: https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html 
 
 // Water plane
 const waterWidth = 128;
 const waterHeight = 128;
-const waterWidthSeg = 1; 
-const waterHeightSeg = 1;
 const waterGeo = new THREE.PlaneGeometry(
   waterWidth, 
   waterHeight, 
-  waterWidthSeg, 
-  waterHeightSeg
 );
 
-// Water material
+// Water options
 const waterColor = new THREE.Color(0x65B6C7)
-const waterMat = new THREE.MeshStandardMaterial({
-  color: waterColor, 
-  transparent: true, 
-  opacity: 0.75, 
-  side: THREE.DoubleSide,
-});
+const waterOptions = {
+  textureWidth:  256,
+  textureHeight: 256,
+  alpha: 0.6,
+  waterNormals:  textureLoader.load("images/waternormals.jpg", function(texture) { // temporary normal
 
-// Water mesh
-const waterMesh = new THREE.Mesh(waterGeo, waterMat);
-waterMesh.receiveShadow = false;
-waterMesh.rotateX(degToRad(-90));
-waterMesh.position.set(0, 17, 0);
-scene.add(waterMesh);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+  }),
+  sunDirection:  sunlight.position.clone().normalize(),
+  sunColor:      sunlightColor, 
+  waterColor:    waterColor, 
+  distortionScale: 1, 
+}
+
+// Water
+const water = new Water(waterGeo, waterOptions); // Pre-built ShaderMaterial
+water.rotateX(degToRad(-90));
+water.position.set(0, 17, 0);
+water.material.transparent = true;
+water.material.opacity = 0.75;
+scene.add(water)
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -438,12 +446,14 @@ function swim(speed) {
 
 const timer = new THREE.Timer();
 
-function animate() {
-  requestAnimationFrame(animate);
-
+function render() {
+    
   orbitControls.update(); // Temporary
 
   timer.update();
+
+  // From https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html
+  water.material.uniforms['time'].value += timer.getDelta();
 
   let fishOrbitSpeed = 10;
   rotateSchool(degToRad(fishOrbitSpeed * timer.getDelta()));
@@ -451,11 +461,12 @@ function animate() {
   let fishSwimSpeed = 20;
   swim(fishSwimSpeed * timer.getElapsed());
 
-  render();
+  renderer.render(scene, camera);
 }
 
-function render() {
-    renderer.render(scene, camera);
+function animate() {
+  requestAnimationFrame(animate);
+  render();
 }
 
 animate();
