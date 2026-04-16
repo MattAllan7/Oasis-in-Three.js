@@ -134,7 +134,7 @@ const waterColor = new THREE.Color(0x65B6C7)
 const waterOptions = {
   textureWidth:  256,
   textureHeight: 256,
-  alpha: 0.6,
+  alpha: 0.8,
   waterNormals:  textureLoader.load("images/waternormals.jpg", function(texture) { // temporary normal
 
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -151,7 +151,6 @@ const water = new Water(waterGeo, waterOptions); // Pre-built ShaderMaterial
 water.rotateX(degToRad(-90));
 water.position.set(0, 17, 0);
 water.material.transparent = true;
-water.material.opacity = 0.75;
 scene.add(water)
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
