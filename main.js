@@ -39,7 +39,7 @@ const orbitControls = new OrbitControls( camera, renderer.domElement );
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 // Sunlight
-const sunlightColor = new THREE.Color(0xF5E5C1); // Beach sand color 
+const sunlightColor = new THREE.Color(0xF5E5C1);
 const sunlightIntensity = 3;
 const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
 sunlight.position.set(200, 500, 800);
@@ -88,7 +88,7 @@ const groundGeo = new THREE.PlaneGeometry(
 );
 
 // Ground material
-const groundColor = new THREE.Color(0xCCB681);
+const groundColor = new THREE.Color(0xDED8C5); // Mixed with directional light for final color. 
 
 const sandTexture = textureLoader.load("./images/sandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
@@ -119,9 +119,10 @@ groundMesh.rotateX(degToRad(-90));
 scene.add(groundMesh);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Water >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
 // Water logic from: https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html 
 
-// Water plane
+// Water plane, argument in Water creation. 
 const waterWidth = 128;
 const waterHeight = 128;
 const waterGeo = new THREE.PlaneGeometry(
@@ -129,17 +130,25 @@ const waterGeo = new THREE.PlaneGeometry(
   waterHeight, 
 );
 
-// Water options
+// Water color 
 const waterColor = new THREE.Color(0x65B6C7)
+
+// Water normal, more realistic considering a tiny pool of water. 
+// From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kcyt6-4e83fdc6-6977-414d-8a89-4b9a61db15b4 
+const waterNormalsSubtle = textureLoader.load("images/waterNormalsSubtle.jpg")
+waterNormalsSubtle.wrapS = waterNormalsSubtle.wrapT = THREE.RepeatWrapping;
+
+// Water normal, easier to tell the water is animated. 
+// From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kmspc-d364e7a4-2d00-4695-b17e-294a258292e0
+const waterNormalsOther = textureLoader.load("images/waterNormalsOther.jpg")
+waterNormalsOther.wrapS = waterNormalsOther.wrapT = THREE.RepeatWrapping;
+
+// Water options, argument in Water creation. 
 const waterOptions = {
   textureWidth:  256,
   textureHeight: 256,
   alpha: 0.8,
-  waterNormals:  textureLoader.load("images/waternormals.jpg", function(texture) { // temporary normal
-
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-
-  }),
+  waterNormals:  waterNormalsSubtle, // Can use <waterNormalsSubtle> or <waterNormalsOther> here
   sunDirection:  sunlight.position.clone().normalize(),
   sunColor:      sunlightColor, 
   waterColor:    waterColor, 
@@ -200,12 +209,7 @@ function createCactus(x, y, z) {
   cactus.rotateY(degToRad(randFloat(0, 360)));
 
   // Shadows
-  cactus.traverse((child) => {
-    if (child.isMesh) {
-      child.receiveShadow = true;
-      child.castShadow = true;
-    }
-  });
+  setShadowProperties(cactus, true, true);
   
   return cactus;
 }
@@ -247,12 +251,7 @@ function createTree(x, y, z, r) {
   tree.rotateY(degToRad(r));
 
   // Shadows
-  tree.traverse((child) => {
-    if (child.isMesh) {
-      child.receiveShadow = true;
-      child.castShadow = true;
-    }
-  });
+  setShadowProperties(tree, true, false);
 
   return tree;
 }
@@ -304,12 +303,7 @@ function createRock(x, y, z) {
   rock.scale.set(rockScale, rockScale, rockScale);
 
   // Shadows
-  rock.traverse((child) => {
-    if (child.isMesh) {
-      child.receiveShadow = true;
-      child.castShadow = true;
-    }
-  });
+  setShadowProperties(rock, true, true);
 
   return rock;
 }
@@ -438,6 +432,17 @@ function swim(speed) {
   school.children.forEach((fish, index) => {
     let swimmingOffset = index / 10; // So siwmming (wobbling) is not synchronized. 
     fish.rotation.y = Math.sin(speed + swimmingOffset) * rotateClamp;
+  });
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Shadows >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+function setShadowProperties(object, cast, receive) {
+  object.traverse((child) => {
+    if (child.isMesh) {
+      child.castShadow = cast;
+      child.receiveShadow = receive;
+    }
   });
 }
 
