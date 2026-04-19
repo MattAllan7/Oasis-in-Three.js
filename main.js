@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { degToRad, randFloat } from 'three/src/math/MathUtils.js';
+import { degToRad, randFloat, randInt } from 'three/src/math/MathUtils.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -158,9 +158,74 @@ const waterOptions = {
 // Water
 const water = new Water(waterGeo, waterOptions); // Pre-built ShaderMaterial
 water.rotateX(degToRad(-90));
-water.position.set(0, 17, 0);
+water.position.set(0, 16, 0);
 water.material.transparent = true;
 scene.add(water)
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Grass >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+// Logic from: https://threejs.org/docs/#BufferGeometry 
+// Logic from: https://threejs.org/docs/#InstancedMesh 
+
+// Blades
+
+const grassGeo = new THREE.BufferGeometry();
+
+const vertices = new Float32Array([
+  0, 10, 0, // top
+  -1, 0, 0, // left
+  1, 0, 0, // right
+]);
+
+grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
+const grassBaseColor = new THREE.Color(0x4B962C);
+const grassMat = new THREE.MeshBasicMaterial({color: grassBaseColor, side: THREE.DoubleSide});
+
+const BLADE_COUNT = 20000;
+
+const grassInstanced = new THREE.InstancedMesh(grassGeo, grassMat, BLADE_COUNT);
+grassInstanced.castShadow = true;
+
+const colorVariance = new THREE.Color();
+
+// Placing
+
+const blade = new THREE.Object3D();
+
+const POOL_INNER_RADIUS = 65; // How big the pool of water radius is. 
+const POOL_OUTER_RADIUS = 115; // How far the grass is placed. 
+
+for(let i = 0; i < BLADE_COUNT; i++) {
+  let angle = degToRad(randFloat(0, 360)); // Random angle between 0 and 360. 
+  let radius = randInt(POOL_INNER_RADIUS, POOL_OUTER_RADIUS); // Random distance. 
+
+  // soh cah toa
+  let x = Math.cos(angle) * radius;
+  let z = Math.sin(angle) * radius;
+  let y = 20;
+
+  // Position
+  blade.position.set(x, y, z);
+
+  // Rotation
+  blade.rotateY(degToRad(randFloat(0, 360))); // Random rotation between 0 and 360. 
+
+  // Scale
+  let scale = 0.3 + randFloat(0, 0.3);
+  blade.scale.set(scale, scale, scale);
+
+  // Color variance
+  let lightness = randFloat(0.75, 1);
+  colorVariance.setHSL(0, 1, lightness);
+  grassInstanced.setColorAt(i, colorVariance);
+
+  // Update
+  blade.updateMatrix();
+  grassInstanced.setMatrixAt(i, blade.matrix);
+}
+
+scene.add(grassInstanced);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -262,11 +327,11 @@ const rockGLTF = await gltfLoader.loadAsync("models/Rock.glb");
 
 const rockCoordinates = [
   {x: 75, y: 20, z: 25},
-  {x: 45, y: 20, z: -55},
+  {x: 55, y: 20, z: -55},
   {x: -25, y: 20, z: -75},
-  {x: -65, y: 20, z: -20},
-  {x: -75, y: 20, z: 0},
-  {x: -45, y: 20, z: 55},
+  {x: -80, y: 20, z: -40},
+  {x: -75, y: 20, z: -10},
+  {x: -45, y: 20, z: 65},
 ];
 
 rockCoordinates.forEach(coord => {
@@ -297,8 +362,8 @@ function createRock(x, y, z) {
   rock.rotateY(rotation);
 
   // Scale
-  let minScale = 2;
-  let maxScale = 4;
+  let minScale = 4;
+  let maxScale = 5;
   let rockScale = randFloat(minScale, maxScale);
   rock.scale.set(rockScale, rockScale, rockScale);
 
