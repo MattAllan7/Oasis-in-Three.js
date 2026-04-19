@@ -56,7 +56,7 @@ sunlight.shadow.camera.right = 600;
 sunlight.shadow.camera.far = 2048;
 sunlight.shadow.camera.updateProjectionMatrix();
 
-// scene.add(sunlight);
+scene.add(sunlight);
 
 const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
 scene.add(sunlightHelper);
@@ -80,7 +80,7 @@ moonlight.shadow.camera.right = 600;
 moonlight.shadow.camera.far = 2048;
 moonlight.shadow.camera.updateProjectionMatrix();
 
-scene.add(moonlight);
+// scene.add(moonlight);
 
 const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
 scene.add(moonlightHelper);
@@ -117,7 +117,7 @@ const groundColor = new THREE.Color(0xDED8C5); // Mixed with directional light f
 
 const sandTexture = textureLoader.load("./images/sandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
-sandTexture.repeat.set(8, 8);
+sandTexture.repeat.set(64, 64);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 let displacementMap = textureLoader.load("./images/heightMap.png");
