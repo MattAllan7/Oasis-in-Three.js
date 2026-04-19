@@ -56,13 +56,38 @@ sunlight.shadow.camera.right = 600;
 sunlight.shadow.camera.far = 2048;
 sunlight.shadow.camera.updateProjectionMatrix();
 
-scene.add(sunlight);
+// scene.add(sunlight);
 
 const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
 scene.add(sunlightHelper);
 
+
+// Moonlight
+const moonlightColor = new THREE.Color(0x707980);
+const moonlightIntensity = 2;
+const moonlight = new THREE.DirectionalLight(moonlightColor, moonlightIntensity);
+moonlight.position.set(200, 500, 800);
+
+// Shadows
+// From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
+moonlight.castShadow = true;
+moonlight.shadow.mapSize.width = 1024;
+moonlight.shadow.mapSize.height = 1024;
+moonlight.shadow.camera.top = 600;
+moonlight.shadow.camera.bottom = -600;
+moonlight.shadow.camera.left = -600;
+moonlight.shadow.camera.right = 600;
+moonlight.shadow.camera.far = 2048;
+moonlight.shadow.camera.updateProjectionMatrix();
+
+scene.add(moonlight);
+
+const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
+scene.add(moonlightHelper);
+
+
 // Ambient light
-const ambientColor = new THREE.Color(0xD68142); // Orange
+const ambientColor = new THREE.Color(0xFFFFFF);
 const ambientIntensity = 0.1;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
 scene.add(ambientLight);
@@ -179,8 +204,11 @@ const vertices = new Float32Array([
 
 grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-const grassBaseColor = new THREE.Color(0x4B962C);
-const grassMat = new THREE.MeshBasicMaterial({color: grassBaseColor, side: THREE.DoubleSide});
+const grassBaseColor = new THREE.Color(0x44803B);
+const grassMat = new THREE.MeshStandardMaterial({
+  color: grassBaseColor, 
+  side: THREE.DoubleSide,
+});
 
 const BLADE_COUNT = 20000;
 
@@ -216,7 +244,7 @@ for(let i = 0; i < BLADE_COUNT; i++) {
   blade.scale.set(scale, scale, scale);
 
   // Color variance
-  let lightness = randFloat(0.75, 1);
+  let lightness = randFloat(0.8, 1);
   colorVariance.setHSL(0, 1, lightness);
   grassInstanced.setColorAt(i, colorVariance);
 
