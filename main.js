@@ -7,22 +7,38 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { alphaT } from 'three/tsl';
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Loaders >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const mtlLoader = new MTLLoader();
 const objLoader = new OBJLoader();
 const gltfLoader = new GLTFLoader();
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Scene >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const scene = new THREE.Scene();
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camera >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 camera.position.set(0, 200, 200);
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Renderer >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
@@ -31,12 +47,20 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camera Controls >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 // Temporary orbit controls. 
 const orbitControls = new OrbitControls( camera, renderer.domElement );
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 // Sunlight
 const sunlightColor = new THREE.Color(0xF5E5C1);
@@ -56,10 +80,8 @@ sunlight.shadow.camera.right = 600;
 sunlight.shadow.camera.far = 2048;
 sunlight.shadow.camera.updateProjectionMatrix();
 
-scene.add(sunlight);
-
-const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
-scene.add(sunlightHelper);
+// const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
+// scene.add(sunlightHelper);
 
 
 // Moonlight
@@ -80,19 +102,26 @@ moonlight.shadow.camera.right = 600;
 moonlight.shadow.camera.far = 2048;
 moonlight.shadow.camera.updateProjectionMatrix();
 
-// scene.add(moonlight);
-
-const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
-scene.add(moonlightHelper);
+// const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
+// scene.add(moonlightHelper);
 
 
 // Ambient light
 const ambientColor = new THREE.Color(0xFFFFFF);
-const ambientIntensity = 0.1;
+const ambientIntensity = 0.5;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
+
+
+// Add lights
+scene.add(sunlight);
+// scene.add(moonlight);
 scene.add(ambientLight);
 
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Ground >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Sand >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -100,33 +129,39 @@ const textureLoader = new THREE.TextureLoader();
 // Height map image from: https://www.deviantart.com/elmininostock/art/Sand-Dunes-Height-Map-seamless-591456783. 
 // Sand texture from: https://texturelabs.org/textures/soil_126/. 
 
-// Ground geometry
-const groundWidth = 1024;
-const groundHeight = 1024;
-const groundWidthSeg = 128; 
-const groundHeightSeg = 128;
-const groundGeo = new THREE.PlaneGeometry(
-  groundWidth, 
-  groundHeight, 
-  groundWidthSeg, 
-  groundHeightSeg,
+
+// Sand geometry
+const sandPlaneWidth = 1024;
+const sandPlaneHeight = 1024;
+const sandPlaneWidthSeg = 128; 
+const sandPlaneHeightSeg = 128;
+const sandGeo = new THREE.PlaneGeometry(
+  sandPlaneWidth, 
+  sandPlaneHeight, 
+  sandPlaneWidthSeg, 
+  sandPlaneHeightSeg,
 );
 
-// Ground material
-const groundColor = new THREE.Color(0xDED8C5); // Mixed with directional light for final color. 
 
+// Ground material
+const sandColor = new THREE.Color(0xDED8C5); // Mixed with directional light for final color. 
+
+// Map
 const sandTexture = textureLoader.load("./images/sandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
 sandTexture.repeat.set(64, 64);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
+// Displacement
 const sandDisplacementMap = textureLoader.load("./images/sandHeightMap.png");
 const sandDisplacementScale = 80;
 
+// Normal
 const sandNormalMap = textureLoader.load("./images/sandNormalMap.jpg");
 
-const groundMat = new THREE.MeshStandardMaterial({
-  color: groundColor, 
+// Create material
+const sandMat = new THREE.MeshStandardMaterial({
+  color: sandColor, 
   map: sandTexture,
   displacementMap: sandDisplacementMap, 
   displacementScale: sandDisplacementScale,
@@ -134,15 +169,20 @@ const groundMat = new THREE.MeshStandardMaterial({
   side: THREE.DoubleSide,
 });
 
-// Ground mesh
-const groundMesh = new THREE.Mesh(groundGeo, groundMat);
-groundMesh.position.set(0, 0, 0);
-groundMesh.receiveShadow = true;
-groundMesh.rotateX(degToRad(-90));
 
-scene.add(groundMesh);
+// Sand mesh
+const sandMesh = new THREE.Mesh(sandGeo, sandMat);
+sandMesh.position.set(0, 0, 0);
+sandMesh.receiveShadow = true;
+sandMesh.rotateX(degToRad(-90));
+
+scene.add(sandMesh);
+
+
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Grass Terrain >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 // Texture from: https://www.poliigon.com/texture/flat-grass-texture/4585
 
@@ -188,35 +228,62 @@ grassTerrainGLTF.scene.traverse((child) => {
 // Add terrain
 scene.add(grassTerrainGLTF.scene);
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Grass Blades >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 // Logic from: https://threejs.org/docs/#BufferGeometry 
 // Logic from: https://threejs.org/docs/#InstancedMesh 
+
 
 // Blades
 
 const grassGeo = new THREE.BufferGeometry();
 
 const vertices = new Float32Array([
-  0, 10, 0, // top
+  0, 8, 0, // top
   -1, 0, 0, // left
   1, 0, 0, // right
 ]);
-
 grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 
-const grassBaseColor = new THREE.Color(0x44803B);
-const grassMat = new THREE.MeshStandardMaterial({
-  color: grassBaseColor, 
+
+// Shader material
+// From: https://github.com/bobbyroe/getting-started-shaders
+
+// Get shaders
+const grassVertexShader = await fetch("shaders/grass.vert");
+const grassFragmentShader = await fetch("shaders/grass.frag");
+
+// For the fragment shader for varying colors 
+const grassNoise = textureLoader.load("images/grassNoise.png");
+grassNoise.wrapS = grassNoise.wrapT = THREE.RepeatWrapping;
+
+// Create material
+const grassMat = new THREE.ShaderMaterial({
+  uniforms: {
+    time:                 {value: 0},
+    noiseTexture:         {value: grassNoise},
+    directionalDirection: {value: sunlight.position.clone().normalize()},
+    directionalColor:     {value: sunlightColor},
+    directionalIntensity: {value: sunlightIntensity},
+    ambientColor:         {value: ambientColor},
+    ambientIntensity:     {value: ambientIntensity},
+  },
+  vertexShader: await grassVertexShader.text(),
+  fragmentShader: await grassFragmentShader.text(),
   side: THREE.DoubleSide,
 });
 
-const BLADE_COUNT = 20000;
+
+// Instanced mesh
+
+const BLADE_COUNT = 40000;
 
 const grassInstanced = new THREE.InstancedMesh(grassGeo, grassMat, BLADE_COUNT);
 grassInstanced.castShadow = true;
-
-const colorVariance = new THREE.Color();
 
 // Placing
 
@@ -238,16 +305,11 @@ for(let i = 0; i < BLADE_COUNT; i++) {
   blade.position.set(x, y, z);
 
   // Rotation
-  blade.rotateY(degToRad(randFloat(0, 360))); // Random rotation between 0 and 360. 
+  blade.rotation.y = degToRad(randFloat(0, 360)); // Random rotation between 0 and 360. 
 
   // Scale
   let scale = 0.3 + randFloat(0, 0.3);
   blade.scale.set(scale, scale, scale);
-
-  // Color variance
-  let lightness = randFloat(0.8, 1);
-  colorVariance.setHSL(0, 1, lightness);
-  grassInstanced.setColorAt(i, colorVariance);
 
   // Update
   blade.updateMatrix();
@@ -256,9 +318,14 @@ for(let i = 0; i < BLADE_COUNT; i++) {
 
 scene.add(grassInstanced);
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Water >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
+
+
 // Water logic from: https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html 
+
 
 // Water plane, argument in Water creation. 
 const waterWidth = 128;
@@ -267,6 +334,9 @@ const waterGeo = new THREE.PlaneGeometry(
   waterWidth, 
   waterHeight, 
 );
+
+
+// Water options
 
 // Water color 
 const waterColor = new THREE.Color(0x65B6C7)
@@ -293,14 +363,20 @@ const waterOptions = {
   distortionScale: 1, 
 }
 
-// Water
+
+// Water creation
 const water = new Water(waterGeo, waterOptions); // Pre-built ShaderMaterial
 water.rotateX(degToRad(-90));
 water.position.set(0, 16, 0);
 water.material.transparent = true;
+
 scene.add(water)
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 // MTL
 const cactusMat = await mtlLoader.loadAsync("models/cactus/cactus.mtl");
@@ -331,6 +407,7 @@ cactusCoordinates.forEach(coord => {
   scene.add(cactus);
 });
 
+
 /**
  * Creates a clone of a tree .obj model and sets the position 
  * to the specified (x, y, z) coordinate. 
@@ -352,7 +429,11 @@ function createCactus(x, y, z) {
   return cactus;
 }
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Trees >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const treeGLTF = await gltfLoader.loadAsync("models/palmTree.glb");
 treeGLTF.scene.scale.set(4, 4, 4);
@@ -367,6 +448,7 @@ treeCoordinates.forEach(coord => {
   let tree = createTree(coord.x, coord.y, coord.z, coord.r);
   scene.add(tree);
 });
+
 
 /**
  * Creates a clone of a tree .glb model and sets the position 
@@ -394,7 +476,11 @@ function createTree(x, y, z, r) {
   return tree;
 }
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Rocks >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const rockGLTF = await gltfLoader.loadAsync("models/rock.glb");
 
@@ -412,6 +498,7 @@ rockCoordinates.forEach(coord => {
   let rock = createRock(coord.x, coord.y, coord.z);
   scene.add(rock);
 });
+
 
 /**
  * Creates a clone of a rock .glb model and sets the position 
@@ -447,7 +534,11 @@ function createRock(x, y, z) {
   return rock;
 }
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Fish >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const fishCoordinates = [
   // Top 3x3
@@ -486,7 +577,9 @@ const fishCoordinates = [
 
 const school = createSchool();
 translateToPerimeter(school);
+
 scene.add(school);
+
 
 /**
  * Defines fish a geometry and material, 
@@ -509,6 +602,7 @@ function createSchool() {
   return school;
 }
 
+
 /**
  * Creates a mesh from a geometry and material and sets the mesh's position 
  * to the specified (x, y, z) coordinate. 
@@ -529,6 +623,7 @@ function createFish(geometry, material, x, y, z) {
   return fishMesh;
 }
 
+
 /**
  * Translates each fish in a school to the perimeter of the water. 
  */
@@ -545,6 +640,7 @@ function translateToPerimeter() {
   });
 }
 
+
 /**
  * Applies a y-rotation to a group. 
  * Children of the group should be offest for the desired effect. 
@@ -555,6 +651,7 @@ function translateToPerimeter() {
 function rotateSchool(speed) {
   school.rotateY(speed);
 }
+
 
 /**
  * Alters the y-rotation of each individual fish in the school 
@@ -574,7 +671,11 @@ function swim(speed) {
   });
 }
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Shadows >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 function setShadowProperties(object, cast, receive) {
   object.traverse((child) => {
@@ -585,7 +686,11 @@ function setShadowProperties(object, cast, receive) {
   });
 }
 
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Animate >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
 
 const timer = new THREE.Timer();
 
@@ -594,9 +699,10 @@ function render() {
   orbitControls.update(); // Temporary
 
   timer.update();
-
+  
   // From https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html
   water.material.uniforms['time'].value += timer.getDelta();
+  grassMat.uniforms['time'].value += timer.getDelta();
 
   let fishOrbitSpeed = 10;
   rotateSchool(degToRad(fishOrbitSpeed * timer.getDelta()));
