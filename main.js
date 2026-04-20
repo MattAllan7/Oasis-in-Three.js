@@ -120,19 +120,18 @@ sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
 sandTexture.repeat.set(64, 64);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-let displacementMap = textureLoader.load("./images/heightMap.png");
-let displacementScale = 80;
+const sandDisplacementMap = textureLoader.load("./images/sandHeightMap.png");
+const sandDisplacementScale = 80;
 
-let normalMap = textureLoader.load("./images/normalMap.jpg");
+const sandNormalMap = textureLoader.load("./images/sandNormalMap.jpg");
 
 const groundMat = new THREE.MeshStandardMaterial({
   color: groundColor, 
   map: sandTexture,
-  displacementMap: displacementMap, 
-  displacementScale: displacementScale,
-  normalMap: normalMap,
+  displacementMap: sandDisplacementMap, 
+  displacementScale: sandDisplacementScale,
+  normalMap: sandNormalMap,
   side: THREE.DoubleSide,
-  wireframe: false, 
 });
 
 // Ground mesh
@@ -142,6 +141,120 @@ groundMesh.receiveShadow = true;
 groundMesh.rotateX(degToRad(-90));
 
 scene.add(groundMesh);
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Grass Terrain >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+// Texture from: https://www.poliigon.com/texture/flat-grass-texture/4585
+
+// GLTF
+const grassTerrainGLTF = await gltfLoader.loadAsync("models/grassTerrain/grassTerrain.glb");
+const grassTerrainScale = 52;
+grassTerrainGLTF.scene.scale.set(grassTerrainScale, grassTerrainScale, grassTerrainScale);
+grassTerrainGLTF.scene.position.set(0, 10, 0);
+
+
+// Material
+
+// Color
+const grassTerrainColor = new THREE.Color(0x9FD986); 
+
+// Map
+const grassColorMap = textureLoader.load("models/grassTerrain/color.jpg");
+grassColorMap.wrapS = grassColorMap.wrapT = THREE.RepeatWrapping;
+grassColorMap.repeat.set(16, 16);
+grassColorMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+// Normal
+const grassNormalMap = textureLoader.load("models/grassTerrain/normal.png")
+
+// Displacement
+const grassDisplacementMap = textureLoader.load("models/grassTerrain/displacement.tiff");
+
+// Create material
+const grassTerrainMat = new THREE.MeshStandardMaterial({
+  map: grassColorMap, 
+  color: grassTerrainColor,
+  normalMap: grassNormalMap, 
+  displacementMap: grassDisplacementMap,
+});
+
+// Apply material
+grassTerrainGLTF.scene.traverse((child) => {
+  if (child.isMesh) {
+    child.material = grassTerrainMat;
+  }
+});
+
+// Add terrain
+scene.add(grassTerrainGLTF.scene);
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Grass Blades >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+// Logic from: https://threejs.org/docs/#BufferGeometry 
+// Logic from: https://threejs.org/docs/#InstancedMesh 
+
+// Blades
+
+const grassGeo = new THREE.BufferGeometry();
+
+const vertices = new Float32Array([
+  0, 10, 0, // top
+  -1, 0, 0, // left
+  1, 0, 0, // right
+]);
+
+grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+
+const grassBaseColor = new THREE.Color(0x44803B);
+const grassMat = new THREE.MeshStandardMaterial({
+  color: grassBaseColor, 
+  side: THREE.DoubleSide,
+});
+
+const BLADE_COUNT = 20000;
+
+const grassInstanced = new THREE.InstancedMesh(grassGeo, grassMat, BLADE_COUNT);
+grassInstanced.castShadow = true;
+
+const colorVariance = new THREE.Color();
+
+// Placing
+
+const blade = new THREE.Object3D();
+
+const POOL_INNER_RADIUS = 73; // How big the pool of water radius is. 
+const POOL_OUTER_RADIUS = 113; // How far the grass is placed. 
+
+for(let i = 0; i < BLADE_COUNT; i++) {
+  let angle = degToRad(randFloat(0, 360)); // Random angle between 0 and 360. 
+  let radius = randInt(POOL_INNER_RADIUS, POOL_OUTER_RADIUS); // Random distance. 
+
+  // soh cah toa
+  let x = Math.cos(angle) * radius;
+  let z = Math.sin(angle) * radius;
+  let y = 20;
+
+  // Position
+  blade.position.set(x, y, z);
+
+  // Rotation
+  blade.rotateY(degToRad(randFloat(0, 360))); // Random rotation between 0 and 360. 
+
+  // Scale
+  let scale = 0.3 + randFloat(0, 0.3);
+  blade.scale.set(scale, scale, scale);
+
+  // Color variance
+  let lightness = randFloat(0.8, 1);
+  colorVariance.setHSL(0, 1, lightness);
+  grassInstanced.setColorAt(i, colorVariance);
+
+  // Update
+  blade.updateMatrix();
+  grassInstanced.setMatrixAt(i, blade.matrix);
+}
+
+scene.add(grassInstanced);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Water >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
@@ -187,83 +300,15 @@ water.position.set(0, 16, 0);
 water.material.transparent = true;
 scene.add(water)
 
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Grass >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-
-// Logic from: https://threejs.org/docs/#BufferGeometry 
-// Logic from: https://threejs.org/docs/#InstancedMesh 
-
-// Blades
-
-const grassGeo = new THREE.BufferGeometry();
-
-const vertices = new Float32Array([
-  0, 10, 0, // top
-  -1, 0, 0, // left
-  1, 0, 0, // right
-]);
-
-grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-
-const grassBaseColor = new THREE.Color(0x44803B);
-const grassMat = new THREE.MeshStandardMaterial({
-  color: grassBaseColor, 
-  side: THREE.DoubleSide,
-});
-
-const BLADE_COUNT = 20000;
-
-const grassInstanced = new THREE.InstancedMesh(grassGeo, grassMat, BLADE_COUNT);
-grassInstanced.castShadow = true;
-
-const colorVariance = new THREE.Color();
-
-// Placing
-
-const blade = new THREE.Object3D();
-
-const POOL_INNER_RADIUS = 65; // How big the pool of water radius is. 
-const POOL_OUTER_RADIUS = 115; // How far the grass is placed. 
-
-for(let i = 0; i < BLADE_COUNT; i++) {
-  let angle = degToRad(randFloat(0, 360)); // Random angle between 0 and 360. 
-  let radius = randInt(POOL_INNER_RADIUS, POOL_OUTER_RADIUS); // Random distance. 
-
-  // soh cah toa
-  let x = Math.cos(angle) * radius;
-  let z = Math.sin(angle) * radius;
-  let y = 20;
-
-  // Position
-  blade.position.set(x, y, z);
-
-  // Rotation
-  blade.rotateY(degToRad(randFloat(0, 360))); // Random rotation between 0 and 360. 
-
-  // Scale
-  let scale = 0.3 + randFloat(0, 0.3);
-  blade.scale.set(scale, scale, scale);
-
-  // Color variance
-  let lightness = randFloat(0.8, 1);
-  colorVariance.setHSL(0, 1, lightness);
-  grassInstanced.setColorAt(i, colorVariance);
-
-  // Update
-  blade.updateMatrix();
-  grassInstanced.setMatrixAt(i, blade.matrix);
-}
-
-scene.add(grassInstanced);
-
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Cacti >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 // MTL
-const cactusMaterial = await mtlLoader.loadAsync("models/Cactus/cactus.mtl");
-cactusMaterial.preload();
+const cactusMat = await mtlLoader.loadAsync("models/cactus/cactus.mtl");
+cactusMat.preload();
 
 // OBJ
-objLoader.setMaterials(cactusMaterial);
-const cactusOBJ = await objLoader.loadAsync("models/Cactus/cactus.obj");
+objLoader.setMaterials(cactusMat);
+const cactusOBJ = await objLoader.loadAsync("models/cactus/cactus.obj");
 cactusOBJ.scale.set(2, 2, 2);
 
 // Coordinates
@@ -309,13 +354,13 @@ function createCactus(x, y, z) {
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Trees >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
-const treeGLTF = await gltfLoader.loadAsync("models/PalmTree.glb");
+const treeGLTF = await gltfLoader.loadAsync("models/palmTree.glb");
 treeGLTF.scene.scale.set(4, 4, 4);
 
 const treeCoordinates = [
-  {x: 50, y:18, z:50, r: 45},
-  {x: -70, y:18, z:10, r: 270},
-  {x: 20, y:18, z:-65, r: 150},
+  {x: 60, y:18, z:60, r: 45},
+  {x: -80, y:18, z:10, r: 270},
+  {x: 20, y:18, z:-80, r: 150},
 ];
 
 treeCoordinates.forEach(coord => {
@@ -351,15 +396,16 @@ function createTree(x, y, z, r) {
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Rocks >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
-const rockGLTF = await gltfLoader.loadAsync("models/Rock.glb");
+const rockGLTF = await gltfLoader.loadAsync("models/rock.glb");
 
 const rockCoordinates = [
-  {x: 75, y: 20, z: 25},
-  {x: 55, y: 20, z: -55},
-  {x: -25, y: 20, z: -75},
+  {x: 85, y: 20, z: 25},
+  {x: 65, y: 20, z: -55},
+  {x: -25, y: 20, z: -85},
   {x: -80, y: 20, z: -40},
-  {x: -75, y: 20, z: -10},
-  {x: -45, y: 20, z: 65},
+  {x: -95, y: 20, z: -10},
+  {x: -55, y: 20, z: 70},
+  {x: 20, y: 20, z: 95},
 ];
 
 rockCoordinates.forEach(coord => {
