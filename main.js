@@ -66,7 +66,7 @@ const orbitControls = new OrbitControls( camera, renderer.domElement );
 const sunlightColor = new THREE.Color(0xF5E5C1);
 const sunlightIntensity = 2;
 const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
-sunlight.position.set(-700, 100, -700);
+sunlight.position.set(-700, 0, -700);
 
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
@@ -85,7 +85,7 @@ sunlight.shadow.camera.updateProjectionMatrix();
 const moonlightColor = new THREE.Color(0x707980);
 const moonlightIntensity = 2;
 const moonlight = new THREE.DirectionalLight(moonlightColor, moonlightIntensity);
-moonlight.position.set(700, -100, 700);
+moonlight.position.set(700, 0, 700);
 
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
@@ -111,6 +111,7 @@ scene.add(ambientLight);
 // Directional light group
 const directionalGroup = new THREE.Group();
 directionalGroup.add(sunlight, moonlight);
+directionalGroup.rotation.x = Math.PI / 2;
 
 scene.add(directionalGroup);
 
@@ -132,7 +133,7 @@ scene.add(sunlightHelper, moonlightHelper);
 const gui = new GUI();
 
 const lightFolder = gui.addFolder('Light');
-lightFolder.add(directionalGroup.rotation, 'x', 0, Math.PI * 2, 0.01);
+lightFolder.add(directionalGroup.rotation, 'x', 0, Math.PI * 2, 0.001);
 lightFolder.open();
 
 
@@ -453,7 +454,8 @@ function createCactus(x, y, z) {
 
 
 const treeGLTF = await gltfLoader.loadAsync("./models/PalmTree.glb");
-treeGLTF.scene.scale.set(4, 4, 4);
+const treeScale = 8;
+treeGLTF.scene.scale.set(treeScale, treeScale, treeScale);
 
 const treeCoordinates = [
   {x: 60, y:18, z:60, r: 45},
@@ -550,6 +552,27 @@ function createRock(x, y, z) {
 
   return rock;
 }
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camel >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+const camelGLTF = await gltfLoader.loadAsync("./models/Camel.glb");
+
+const camelScale = 8;
+camelGLTF.scene.scale.set(camelScale, camelScale, camelScale);
+
+camelGLTF.scene.position.set(70, 19, 120);
+
+const camelRotaiton = -110;
+camelGLTF.scene.rotation.y = degToRad(camelRotaiton);
+
+setShadowProperties(camelGLTF.scene, true, false);
+
+// Add terrain
+scene.add(camelGLTF.scene);
 
 
 
@@ -720,7 +743,7 @@ function render() {
 
   // Determine which light is currently above the scene
   sunlight.getWorldPosition(lightWorldPos);
-  const activeLight = lightWorldPos.y > 0 ? sunlight : moonlight;
+  const activeLight = lightWorldPos.y > 100 ? sunlight : moonlight; // 100 because if at y=1, grass looks weird with barely any sunlight. 
 
 
   // Update grass shader
@@ -729,7 +752,7 @@ function render() {
   activeLight.getWorldPosition(lightWorldPos);
   grassMat.uniforms['directionalDirection'].value.copy(lightWorldPos).normalize();
   grassMat.uniforms['directionalColor'].value.copy(activeLight.color);
-  grassMat.uniforms['directionalIntensity'].value = activeLight.intensity / 2;
+  grassMat.uniforms['directionalIntensity'].value = activeLight.intensity / 3;
 
 
   // Update water uniforms to match the active light
