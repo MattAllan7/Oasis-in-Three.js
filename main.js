@@ -128,7 +128,7 @@ function moveUp(distance) {
 
 // Sunlight
 const sunlightColor = new THREE.Color(0xF5E5C1);
-const sunlightIntensity = 2;
+const sunlightIntensity = 2.5;
 const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
 sunlight.position.set(-700, 0, -700);
 
@@ -468,6 +468,7 @@ cactusMat.preload();
 objLoader.setMaterials(cactusMat);
 const cactusOBJ = await objLoader.loadAsync("./models/Cactus/cactus.obj");
 
+// Scale
 const cactusScale = 4;
 cactusOBJ.scale.set(cactusScale, cactusScale, cactusScale);
 
@@ -486,6 +487,7 @@ const cactusCoordinates = [
   {x: -250, y: 15, z: -100},
 ]
 
+// Add
 cactusCoordinates.forEach(coord => {
   let cactus = createCactus(coord.x, coord.y, coord.z);
   scene.add(cactus);
@@ -519,16 +521,28 @@ function createCactus(x, y, z) {
 
 
 
+// Load object
 const treeGLTF = await gltfLoader.loadAsync("./models/PalmTree.glb");
+
+// Change material properties
+treeGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 0.8; // Reduce shine
+  }
+});
+
+// Scale
 const treeScale = 9.5;
 treeGLTF.scene.scale.set(treeScale, treeScale, treeScale);
 
+// Coordintaes
 const treeCoordinates = [
   {x: 60, y:18, z:60, r: 45},
   {x: -90, y:18, z:10, r: 270},
   {x: 20, y:18, z:-80, r: 150},
 ];
 
+// Add
 treeCoordinates.forEach(coord => {
   let tree = createTree(coord.x, coord.y, coord.z, coord.r);
   scene.add(tree);
@@ -567,8 +581,17 @@ function createTree(x, y, z, r) {
 
 
 
+// Load object
 const rockGLTF = await gltfLoader.loadAsync("./models/Rock.glb");
 
+// Change material properties
+rockGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 0.8; // Reduce shine
+  }
+});
+
+// Coordinates
 const rockCoordinates = [
   {x: 85, y: 20, z: 25},
   {x: 65, y: 20, z: -55},
@@ -579,6 +602,7 @@ const rockCoordinates = [
   {x: 20, y: 20, z: 95},
 ];
 
+// Add
 rockCoordinates.forEach(coord => {
   let rock = createRock(coord.x, coord.y, coord.z);
   scene.add(rock);
@@ -625,18 +649,31 @@ function createRock(x, y, z) {
 
 
 
+// Load object
 const camelGLTF = await gltfLoader.loadAsync("./models/Camel.glb");
 
+// Change material properties
+camelGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 1; // No shine
+  }
+});
+
+// Scale
 const camelScale = 8;
 camelGLTF.scene.scale.set(camelScale, camelScale, camelScale);
 
+// Position
 camelGLTF.scene.position.set(70, 19, 120);
 
+// Rotation
 const camelRotaiton = -110;
 camelGLTF.scene.rotation.y = degToRad(camelRotaiton);
 
+// Shadows
 setShadowProperties(camelGLTF.scene, true, false);
 
+// Add
 scene.add(camelGLTF.scene);
 
 
@@ -645,18 +682,31 @@ scene.add(camelGLTF.scene);
 
 
 
+// Load object
 const tentGLTF = await gltfLoader.loadAsync("./models/Tent.glb");
 
+// Change material properties 
+tentGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 1; // Fully diffuse, no shine
+  }
+});
+
+// Scale
 const tentScale = 10;
 tentGLTF.scene.scale.set(tentScale, tentScale, tentScale);
 
+// Position
 tentGLTF.scene.position.set(-105, 20.1, -105);
 
+// Rotation
 const tentRotation = -45;
 tentGLTF.scene.rotation.y = degToRad(tentRotation);
 
-setShadowProperties(tentGLTF.scene, true, true);
+// Shadows
+setShadowProperties(tentGLTF.scene, true, false);
 
+// Add
 scene.add(tentGLTF.scene);
 
 
@@ -665,8 +715,10 @@ scene.add(tentGLTF.scene);
 
 
 
+// Load object
 const fishGLTF = await gltfLoader.loadAsync("./models/Fish.glb");
 
+// Coordinates
 const fishCoordinates = [
   // Top 3x3
   {x: -2, y: 2, z: -4},
@@ -702,6 +754,7 @@ const fishCoordinates = [
   {x: 2, y: -2, z: 4},
 ];
 
+// Add
 const school = createSchool();
 translateToPerimeter(school);
 
@@ -795,6 +848,13 @@ function swim(speed) {
 
 
 
+/**
+ * Used to configure shadow properties of some object. 
+ * 
+ * @param {object} object The object to apply shadow properties to
+ * @param {boolean} cast Does the object cast shadows?
+ * @param {boolean} receive Does the object receive shadows?
+ */
 function setShadowProperties(object, cast, receive) {
   object.traverse((child) => {
     if (child.isMesh) {
