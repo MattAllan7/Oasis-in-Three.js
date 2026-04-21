@@ -205,7 +205,7 @@ scene.add(sandMesh);
 // Texture from: https://www.poliigon.com/texture/flat-grass-texture/4585
 
 // GLTF
-const grassTerrainGLTF = await gltfLoader.loadAsync("models/grassTerrain/grassTerrain.glb");
+const grassTerrainGLTF = await gltfLoader.loadAsync("./models/grassTerrain/grassTerrain.glb");
 const grassTerrainScale = 52;
 grassTerrainGLTF.scene.scale.set(grassTerrainScale, grassTerrainScale, grassTerrainScale);
 grassTerrainGLTF.scene.position.set(0, 10, 0);
@@ -217,16 +217,16 @@ grassTerrainGLTF.scene.position.set(0, 10, 0);
 const grassTerrainColor = new THREE.Color(0xB1D18C); 
 
 // Map
-const grassColorMap = textureLoader.load("models/grassTerrain/color.jpg");
+const grassColorMap = textureLoader.load("./models/grassTerrain/color.jpg");
 grassColorMap.wrapS = grassColorMap.wrapT = THREE.RepeatWrapping;
 grassColorMap.repeat.set(16, 16);
 grassColorMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Normal
-const grassNormalMap = textureLoader.load("models/grassTerrain/normal.png")
+const grassNormalMap = textureLoader.load("./models/grassTerrain/normal.png")
 
 // Displacement
-const grassDisplacementMap = textureLoader.load("models/grassTerrain/displacement.tiff");
+const grassDisplacementMap = textureLoader.load("./models/grassTerrain/displacement.tiff");
 
 // Create material
 const grassTerrainMat = new THREE.MeshStandardMaterial({
@@ -274,12 +274,12 @@ grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
 // From: https://github.com/bobbyroe/getting-started-shaders
 
 // Get shaders
-const grassVertexShader = await fetch("shaders/grass.vert");
-const grassFragmentShader = await fetch("shaders/grass.frag");
+const grassVertexShader = await fetch("./shaders/grass.vert");
+const grassFragmentShader = await fetch("./shaders/grass.frag");
 
 // For the fragment shader for varying colors 
 // From: https://blog.mbedded.ninja/mathematics/perlin-noise/
-const grassNoise = textureLoader.load("images/grassNoise.png");
+const grassNoise = textureLoader.load("./images/grassNoise.png");
 grassNoise.wrapS = grassNoise.wrapT = THREE.RepeatWrapping;
 
 // Create material
@@ -364,12 +364,12 @@ const waterColor = new THREE.Color(0x65B6C7)
 
 // Water normal, more realistic considering a tiny pool of water. 
 // From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kcyt6-4e83fdc6-6977-414d-8a89-4b9a61db15b4 
-const waterNormalsSubtle = textureLoader.load("images/waterNormalsSubtle.jpg")
+const waterNormalsSubtle = textureLoader.load("./images/waterNormalsSubtle.jpg")
 waterNormalsSubtle.wrapS = waterNormalsSubtle.wrapT = THREE.RepeatWrapping;
 
 // Water normal, easier to tell the water is animated. 
 // From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kmspc-d364e7a4-2d00-4695-b17e-294a258292e0
-const waterNormalsOther = textureLoader.load("images/waterNormalsOther.jpg")
+const waterNormalsOther = textureLoader.load("./images/waterNormalsOther.jpg")
 waterNormalsOther.wrapS = waterNormalsOther.wrapT = THREE.RepeatWrapping;
 
 // Water options, argument in Water creation. 
@@ -400,12 +400,12 @@ scene.add(water)
 
 
 // MTL
-const cactusMat = await mtlLoader.loadAsync("models/cactus/cactus.mtl");
+const cactusMat = await mtlLoader.loadAsync("./models/cactus/cactus.mtl");
 cactusMat.preload();
 
 // OBJ
 objLoader.setMaterials(cactusMat);
-const cactusOBJ = await objLoader.loadAsync("models/cactus/cactus.obj");
+const cactusOBJ = await objLoader.loadAsync("./models/cactus/cactus.obj");
 cactusOBJ.scale.set(2, 2, 2);
 
 // Coordinates
@@ -456,7 +456,7 @@ function createCactus(x, y, z) {
 
 
 
-const treeGLTF = await gltfLoader.loadAsync("models/palmTree.glb");
+const treeGLTF = await gltfLoader.loadAsync("./models/palmTree.glb");
 treeGLTF.scene.scale.set(4, 4, 4);
 
 const treeCoordinates = [
@@ -503,7 +503,7 @@ function createTree(x, y, z, r) {
 
 
 
-const rockGLTF = await gltfLoader.loadAsync("models/rock.glb");
+const rockGLTF = await gltfLoader.loadAsync("./models/rock.glb");
 
 const rockCoordinates = [
   {x: 85, y: 20, z: 25},
