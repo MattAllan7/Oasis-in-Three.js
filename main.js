@@ -580,6 +580,8 @@ scene.add(camelGLTF.scene);
 
 
 
+const fishGLTF = await gltfLoader.loadAsync("./models/Fish.glb");
+
 const fishCoordinates = [
   // Top 3x3
   {x: -2, y: 2, z: -4},
@@ -630,38 +632,49 @@ scene.add(school);
 function createSchool() {
   const school = new THREE.Group();
 
-  const fishGeo = new THREE.BoxGeometry(1, 1, 2);
+  // const fishGeo = new THREE.BoxGeometry(1, 1, 2);
 
-  const fishMatColor = new THREE.Color(0xD68142);
-  const fishMat = new THREE.MeshStandardMaterial(fishMatColor);
+  // const fishMatColor = new THREE.Color(0xD68142);
+  // const fishMat = new THREE.MeshStandardMaterial(fishMatColor);
 
   fishCoordinates.forEach(coord => {
-    school.add(createFish(fishGeo, fishMat, coord.x, coord.y, coord.z));
+    // school.add(createFish(fishGeo, fishMat, coord.x, coord.y, coord.z));
+    school.add(createFish(coord.x, coord.y, coord.z));
   });
 
   return school;
 }
 
 
-/**
- * Creates a mesh from a geometry and material and sets the mesh's position 
- * to the specified (x, y, z) coordinate. 
- * 
- * @param {THREE.BoxGeometry} geometry Fish geometry. 
- * @param {THREE.MeshStandardMaterial} material Fish material. 
- * @param {number} x The x-position relative to the school. 
- * @param {number} y The y-position relative to the school. 
- * @param {number} z The z-position relative to the school. 
- * @returns A fish mesh at the desired position. 
- */
-function createFish(geometry, material, x, y, z) {
-  let fishMesh = new THREE.Mesh(geometry, material);
+function createFish(x, y, z) {
+  let fish = fishGLTF.scene.clone();
 
   // Position
-  fishMesh.position.set(x, y, z);
+  fish.position.set(x, y, z);
 
-  return fishMesh;
+  return fish;
 }
+
+
+// /**
+//  * Creates a mesh from a geometry and material and sets the mesh's position 
+//  * to the specified (x, y, z) coordinate. 
+//  * 
+//  * @param {THREE.BoxGeometry} geometry Fish geometry. 
+//  * @param {THREE.MeshStandardMaterial} material Fish material. 
+//  * @param {number} x The x-position relative to the school. 
+//  * @param {number} y The y-position relative to the school. 
+//  * @param {number} z The z-position relative to the school. 
+//  * @returns A fish mesh at the desired position. 
+//  */
+// function createFish(geometry, material, x, y, z) {
+//   let fishMesh = new THREE.Mesh(geometry, material);
+
+//   // Position
+//   fishMesh.position.set(x, y, z);
+
+//   return fishMesh;
+// }
 
 
 /**
@@ -769,7 +782,7 @@ function render() {
   // Fish
 
   let fishOrbitSpeed = 10;
-  rotateSchool(degToRad(fishOrbitSpeed * timer.getDelta()));
+  rotateSchool(degToRad(-fishOrbitSpeed * timer.getDelta()));
   
   let fishSwimSpeed = 20;
   swim(fishSwimSpeed * timer.getElapsed());
