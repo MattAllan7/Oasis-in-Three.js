@@ -378,7 +378,7 @@ const waterOptions = {
   textureHeight:   1024,
   alpha:           0.8,
   waterNormals:    waterNormalsSubtle, // Can use <waterNormalsSubtle> or <waterNormalsOther> here
-  sunDirection:    sunlight.clone().position.normalize(),
+  sunDirection:    sunlight.position.clone().normalize(),
   sunColor:        sunlight.color.clone(), 
   waterColor:      waterColor, 
   distortionScale: 50, 
