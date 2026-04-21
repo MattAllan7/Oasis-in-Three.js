@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { degToRad, randFloat, randInt } from 'three/src/math/MathUtils.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Water } from 'three/addons/objects/Water.js';
 import { GUI } from 'dat.gui'
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 
 
 
@@ -32,7 +32,8 @@ const scene = new THREE.Scene();
 
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-camera.position.set(0, 200, 200);
+camera.position.set(-200, 50, 0);
+camera.lookAt(0, 50, 0,);
 
 
 
@@ -41,7 +42,7 @@ camera.position.set(0, 200, 200);
 
 
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -53,8 +54,71 @@ document.body.appendChild(renderer.domElement);
 
 
 
-// Temporary orbit controls. 
-const orbitControls = new OrbitControls( camera, renderer.domElement );
+const cameraControls = new PointerLockControls(camera, renderer.domElement);
+
+const moveSpeed = 50;
+const movement = {
+  forward: false,
+  backward: false,
+  left: false,
+  right: false,
+  up: false, 
+  down: false,
+};
+
+document.addEventListener('click', function () {cameraControls.lock();}, false);
+
+document.addEventListener('keydown', function (event) {
+  switch (event.code) {
+    case 'KeyW': movement.forward = true; break;
+    case 'KeyA': movement.left = true; break;
+    case 'KeyS': movement.backward = true; break;
+    case 'KeyD': movement.right = true; break;
+    case 'Space': movement.up = true; break;
+    case 'ShiftLeft': movement.down = true; break;
+  }
+});  
+
+document.addEventListener('keyup', function (event) {
+  switch (event.code) {
+    case 'KeyW': movement.forward = false; break;
+    case 'KeyS': movement.backward = false; break;
+    case 'KeyA': movement.left = false; break;
+    case 'KeyD': movement.right = false; break;
+    case 'Space': movement.up = false; break;
+    case 'ShiftLeft': movement.down = false; break;
+  }
+});
+
+const timerMovement = new THREE.Timer();
+timerMovement.connect(document);
+
+/**
+ * Updates the camera position based on which movement keys are currently being pressed.
+ * The camera movement is frame-rate independent since the movement speed is multiplied by the time delta between frames. 
+ * The camera moves in the direction it is currently facing, so the movement directions are relative to the camera's orientation.
+ */
+function updateMovement() {
+  timerMovement.update();
+  const delta = timerMovement.getDelta();
+  if (movement.forward)  cameraControls.moveForward(moveSpeed * delta);
+  if (movement.backward) cameraControls.moveForward(-moveSpeed * delta);
+  if (movement.left)     cameraControls.moveRight(-moveSpeed * delta);
+  if (movement.right)    cameraControls.moveRight(moveSpeed * delta);
+  if (movement.up)       moveUp(moveSpeed * delta);
+  if (movement.down)     moveUp(-moveSpeed * delta);
+}
+
+
+/**
+ * Since PointerLockControls does not have a moveUp method a custom one is defined. 
+ * Moves camera on the y-axis. 
+ * 
+ * @param {number} distance Amount to move position by. 
+ */
+function moveUp(distance) {
+  camera.position.y += distance;
+}
 
 
 
@@ -133,7 +197,7 @@ scene.add(sunlightHelper, moonlightHelper);
 const gui = new GUI();
 
 const lightFolder = gui.addFolder('Light');
-lightFolder.add(directionalGroup.rotation, 'x', 0, Math.PI * 2, 0.001);
+lightFolder.add(directionalGroup.rotation, 'x', 0, Math.PI * 4, 0.001);
 lightFolder.open();
 
 
@@ -403,7 +467,9 @@ cactusMat.preload();
 // OBJ
 objLoader.setMaterials(cactusMat);
 const cactusOBJ = await objLoader.loadAsync("./models/Cactus/cactus.obj");
-cactusOBJ.scale.set(2, 2, 2);
+
+const cactusScale = 4;
+cactusOBJ.scale.set(cactusScale, cactusScale, cactusScale);
 
 // Coordinates
 const cactusCoordinates = [
@@ -624,21 +690,14 @@ scene.add(school);
 
 
 /**
- * Defines fish a geometry and material, 
- * and calls createFish() for each entry in fishPositions. 
+ * Creates a school/group of fish for each coordinate and returns the school. 
  * 
  * @returns A group/school of fish. 
  */
 function createSchool() {
   const school = new THREE.Group();
 
-  // const fishGeo = new THREE.BoxGeometry(1, 1, 2);
-
-  // const fishMatColor = new THREE.Color(0xD68142);
-  // const fishMat = new THREE.MeshStandardMaterial(fishMatColor);
-
   fishCoordinates.forEach(coord => {
-    // school.add(createFish(fishGeo, fishMat, coord.x, coord.y, coord.z));
     school.add(createFish(coord.x, coord.y, coord.z));
   });
 
@@ -646,6 +705,14 @@ function createSchool() {
 }
 
 
+/**
+ * Clones the fishGLTF and sets its position, and then returns it. 
+ * 
+ * @param {number} x The x-position relative to the school. 
+ * @param {number} y The y-position relative to the school. 
+ * @param {number} z The z-position relative to the school. 
+ * @returns A clone of fishGLTF. 
+ */
 function createFish(x, y, z) {
   let fish = fishGLTF.scene.clone();
 
@@ -654,27 +721,6 @@ function createFish(x, y, z) {
 
   return fish;
 }
-
-
-// /**
-//  * Creates a mesh from a geometry and material and sets the mesh's position 
-//  * to the specified (x, y, z) coordinate. 
-//  * 
-//  * @param {THREE.BoxGeometry} geometry Fish geometry. 
-//  * @param {THREE.MeshStandardMaterial} material Fish material. 
-//  * @param {number} x The x-position relative to the school. 
-//  * @param {number} y The y-position relative to the school. 
-//  * @param {number} z The z-position relative to the school. 
-//  * @returns A fish mesh at the desired position. 
-//  */
-// function createFish(geometry, material, x, y, z) {
-//   let fishMesh = new THREE.Mesh(geometry, material);
-
-//   // Position
-//   fishMesh.position.set(x, y, z);
-
-//   return fishMesh;
-// }
 
 
 /**
@@ -726,7 +772,7 @@ function swim(speed) {
 
 
 
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Shadows >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Shadows Properties >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 
 
@@ -745,18 +791,29 @@ function setShadowProperties(object, cast, receive) {
 
 
 
-const timer = new THREE.Timer();
+const timerScene = new THREE.Timer();
 const lightWorldPos = new THREE.Vector3();
 
 function render() {
     
-  orbitControls.update(); // Temporary
-  timer.update();
+  updateMovement();
+  timerScene.update();
 
 
   // Determine which light is currently above the scene
+  let activeLight;
   sunlight.getWorldPosition(lightWorldPos);
-  const activeLight = lightWorldPos.y > 100 ? sunlight : moonlight; // 100 because if at y=1, grass looks weird with barely any sunlight. 
+
+  // Disable light below the plane. 
+  if(lightWorldPos.y > 0) {
+    activeLight = sunlight;
+    sunlight.intensity = sunlightIntensity;
+    moonlight.intensity = 0;
+  } else {
+    activeLight = moonlight;
+    moonlight.intensity = moonlightIntensity;
+    sunlight.intensity = 0;
+  }
 
 
   // Update grass shader
@@ -765,7 +822,7 @@ function render() {
   activeLight.getWorldPosition(lightWorldPos);
   grassMat.uniforms['directionalDirection'].value.copy(lightWorldPos).normalize();
   grassMat.uniforms['directionalColor'].value.copy(activeLight.color);
-  grassMat.uniforms['directionalIntensity'].value = activeLight.intensity / 3;
+  grassMat.uniforms['directionalIntensity'].value = activeLight.intensity / 2;
 
 
   // Update water uniforms to match the active light
@@ -775,17 +832,17 @@ function render() {
 
   // Animate shaders
   // From https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html
-  water.material.uniforms['time'].value += timer.getDelta();
-  grassMat.uniforms['time'].value += timer.getDelta();
+  water.material.uniforms['time'].value += timerScene.getDelta();
+  grassMat.uniforms['time'].value += timerScene.getDelta();
 
 
   // Fish
 
   let fishOrbitSpeed = 10;
-  rotateSchool(degToRad(-fishOrbitSpeed * timer.getDelta()));
+  rotateSchool(degToRad(-fishOrbitSpeed * timerScene.getDelta()));
   
   let fishSwimSpeed = 20;
-  swim(fishSwimSpeed * timer.getElapsed());
+  swim(fishSwimSpeed * timerScene.getElapsed());
 
 
   renderer.render(scene, camera);
