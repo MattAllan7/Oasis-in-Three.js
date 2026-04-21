@@ -520,12 +520,12 @@ function createCactus(x, y, z) {
 
 
 const treeGLTF = await gltfLoader.loadAsync("./models/PalmTree.glb");
-const treeScale = 8;
+const treeScale = 9.5;
 treeGLTF.scene.scale.set(treeScale, treeScale, treeScale);
 
 const treeCoordinates = [
   {x: 60, y:18, z:60, r: 45},
-  {x: -80, y:18, z:10, r: 270},
+  {x: -90, y:18, z:10, r: 270},
   {x: 20, y:18, z:-80, r: 150},
 ];
 
@@ -637,8 +637,27 @@ camelGLTF.scene.rotation.y = degToRad(camelRotaiton);
 
 setShadowProperties(camelGLTF.scene, true, false);
 
-// Add terrain
 scene.add(camelGLTF.scene);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Tent >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+const tentGLTF = await gltfLoader.loadAsync("./models/Tent.glb");
+
+const tentScale = 10;
+tentGLTF.scene.scale.set(tentScale, tentScale, tentScale);
+
+tentGLTF.scene.position.set(-105, 20.1, -105);
+
+const tentRotation = -45;
+tentGLTF.scene.rotation.y = degToRad(tentRotation);
+
+setShadowProperties(tentGLTF.scene, true, true);
+
+scene.add(tentGLTF.scene);
 
 
 
