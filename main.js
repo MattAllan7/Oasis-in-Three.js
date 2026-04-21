@@ -5,7 +5,7 @@ import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Water } from 'three/addons/objects/Water.js';
-import { alphaT } from 'three/tsl';
+import { GUI } from 'dat.gui'
 
 
 
@@ -64,9 +64,9 @@ const orbitControls = new OrbitControls( camera, renderer.domElement );
 
 // Sunlight
 const sunlightColor = new THREE.Color(0xF5E5C1);
-const sunlightIntensity = 3;
+const sunlightIntensity = 2;
 const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
-sunlight.position.set(200, 500, 800);
+sunlight.position.set(-700, 100, -700);
 
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
@@ -80,15 +80,12 @@ sunlight.shadow.camera.right = 600;
 sunlight.shadow.camera.far = 2048;
 sunlight.shadow.camera.updateProjectionMatrix();
 
-// const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
-// scene.add(sunlightHelper);
-
 
 // Moonlight
 const moonlightColor = new THREE.Color(0x707980);
 const moonlightIntensity = 2;
 const moonlight = new THREE.DirectionalLight(moonlightColor, moonlightIntensity);
-moonlight.position.set(200, 500, 800);
+moonlight.position.set(700, -100, 700);
 
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
@@ -102,20 +99,41 @@ moonlight.shadow.camera.right = 600;
 moonlight.shadow.camera.far = 2048;
 moonlight.shadow.camera.updateProjectionMatrix();
 
-// const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
-// scene.add(moonlightHelper);
-
 
 // Ambient light
 const ambientColor = new THREE.Color(0xFFFFFF);
-const ambientIntensity = 0.5;
+const ambientIntensity = 0.1;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
 
-
-// Add lights
-scene.add(sunlight);
-// scene.add(moonlight);
 scene.add(ambientLight);
+
+
+// Directional light group
+const directionalGroup = new THREE.Group();
+directionalGroup.add(sunlight, moonlight);
+
+scene.add(directionalGroup);
+
+
+// Directional helpers
+const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
+const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
+scene.add(sunlightHelper, moonlightHelper);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< GUI >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// https://sbcode.net/threejs/dat-gui-module/
+
+
+const gui = new GUI();
+
+const lightFolder = gui.addFolder('Light');
+lightFolder.add(directionalGroup.rotation, 'x', 0, Math.PI * 2, 0.01);
+lightFolder.open();
 
 
 
@@ -173,8 +191,8 @@ const sandMat = new THREE.MeshStandardMaterial({
 // Sand mesh
 const sandMesh = new THREE.Mesh(sandGeo, sandMat);
 sandMesh.position.set(0, 0, 0);
-sandMesh.receiveShadow = true;
 sandMesh.rotateX(degToRad(-90));
+setShadowProperties(sandMesh, false, true);
 
 scene.add(sandMesh);
 
@@ -196,7 +214,7 @@ grassTerrainGLTF.scene.position.set(0, 10, 0);
 // Material
 
 // Color
-const grassTerrainColor = new THREE.Color(0x9FD986); 
+const grassTerrainColor = new THREE.Color(0xB1D18C); 
 
 // Map
 const grassColorMap = textureLoader.load("models/grassTerrain/color.jpg");
@@ -224,6 +242,8 @@ grassTerrainGLTF.scene.traverse((child) => {
     child.material = grassTerrainMat;
   }
 });
+
+setShadowProperties(grassTerrainGLTF.scene, false, true);
 
 // Add terrain
 scene.add(grassTerrainGLTF.scene);
@@ -258,6 +278,7 @@ const grassVertexShader = await fetch("shaders/grass.vert");
 const grassFragmentShader = await fetch("shaders/grass.frag");
 
 // For the fragment shader for varying colors 
+// From: https://blog.mbedded.ninja/mathematics/perlin-noise/
 const grassNoise = textureLoader.load("images/grassNoise.png");
 grassNoise.wrapS = grassNoise.wrapT = THREE.RepeatWrapping;
 
@@ -267,8 +288,8 @@ const grassMat = new THREE.ShaderMaterial({
     time:                 {value: 0},
     noiseTexture:         {value: grassNoise},
     directionalDirection: {value: sunlight.position.clone().normalize()},
-    directionalColor:     {value: sunlightColor},
-    directionalIntensity: {value: sunlightIntensity},
+    directionalColor:     {value: sunlight.color.clone()},
+    directionalIntensity: {value: sunlight.intensity},
     ambientColor:         {value: ambientColor},
     ambientIntensity:     {value: ambientIntensity},
   },
@@ -283,7 +304,7 @@ const grassMat = new THREE.ShaderMaterial({
 const BLADE_COUNT = 40000;
 
 const grassInstanced = new THREE.InstancedMesh(grassGeo, grassMat, BLADE_COUNT);
-grassInstanced.castShadow = true;
+setShadowProperties(grassInstanced, true, true);
 
 // Placing
 
@@ -353,14 +374,14 @@ waterNormalsOther.wrapS = waterNormalsOther.wrapT = THREE.RepeatWrapping;
 
 // Water options, argument in Water creation. 
 const waterOptions = {
-  textureWidth:  256,
-  textureHeight: 256,
-  alpha: 0.8,
-  waterNormals:  waterNormalsSubtle, // Can use <waterNormalsSubtle> or <waterNormalsOther> here
-  sunDirection:  sunlight.position.clone().normalize(),
-  sunColor:      sunlightColor, 
-  waterColor:    waterColor, 
-  distortionScale: 1, 
+  textureWidth:    1024,
+  textureHeight:   1024,
+  alpha:           0.8,
+  waterNormals:    waterNormalsSubtle, // Can use <waterNormalsSubtle> or <waterNormalsOther> here
+  sunDirection:    sunlight.clone().position.normalize(),
+  sunColor:        sunlight.color.clone(), 
+  waterColor:      waterColor, 
+  distortionScale: 50, 
 }
 
 
@@ -529,7 +550,7 @@ function createRock(x, y, z) {
   rock.scale.set(rockScale, rockScale, rockScale);
 
   // Shadows
-  setShadowProperties(rock, true, true);
+  setShadowProperties(rock, true, false);
 
   return rock;
 }
@@ -693,22 +714,47 @@ function setShadowProperties(object, cast, receive) {
 
 
 const timer = new THREE.Timer();
+const lightWorldPos = new THREE.Vector3();
 
 function render() {
     
   orbitControls.update(); // Temporary
-
   timer.update();
+
+
+  // Determine which light is currently above the scene
+  sunlight.getWorldPosition(lightWorldPos);
+  const activeLight = lightWorldPos.y > 0 ? sunlight : moonlight;
+
+
+  // Update grass shader
+
+  // Update grass uniforms to match the active light
+  activeLight.getWorldPosition(lightWorldPos);
+  grassMat.uniforms['directionalDirection'].value.copy(lightWorldPos).normalize();
+  grassMat.uniforms['directionalColor'].value.copy(activeLight.color);
+  grassMat.uniforms['directionalIntensity'].value = activeLight.intensity / 2;
+
+
+  // Update water uniforms to match the active light
+  water.material.uniforms['sunDirection'].value.copy(lightWorldPos).normalize();
+  water.material.uniforms['sunColor'].value.copy(activeLight.color);
   
+
+  // Animate shaders
   // From https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html
   water.material.uniforms['time'].value += timer.getDelta();
   grassMat.uniforms['time'].value += timer.getDelta();
+
+
+  // Fish
 
   let fishOrbitSpeed = 10;
   rotateSchool(degToRad(fishOrbitSpeed * timer.getDelta()));
   
   let fishSwimSpeed = 20;
   swim(fishSwimSpeed * timer.getElapsed());
+
 
   renderer.render(scene, camera);
 }

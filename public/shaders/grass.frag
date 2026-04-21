@@ -22,8 +22,8 @@ void main() {
   float noiseValue = texture2D(noiseTexture, noiseUV).r;
 
   // Mix between two greens based on the noise value
-  vec3 darkGreen   = vec3(0.15, 0.42, 0.17);
-  vec3 brightGreen = vec3(0.42, 0.56, 0.26);
+  vec3 darkGreen   = vec3(0.2706, 0.4549, 0.2706);
+  vec3 brightGreen = vec3(0.4471, 0.4784, 0.2745);
   vec3 color = mix(darkGreen, brightGreen, noiseValue);
 
 
