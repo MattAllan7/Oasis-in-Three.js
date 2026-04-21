@@ -700,7 +700,7 @@ tentGLTF.scene.scale.set(tentScale, tentScale, tentScale);
 tentGLTF.scene.position.set(-105, 20.1, -105);
 
 // Rotation
-const tentRotation = -45;
+const tentRotation = 30;
 tentGLTF.scene.rotation.y = degToRad(tentRotation);
 
 // Shadows
@@ -708,6 +708,73 @@ setShadowProperties(tentGLTF.scene, true, false);
 
 // Add
 scene.add(tentGLTF.scene);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Pyramid >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// Load object
+const pyramidGLTF = await gltfLoader.loadAsync("./models/Pyramid.glb");
+
+// Change material properties 
+pyramidGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 1; // Fully diffuse, no shine
+    child.material.metalness = 0.5;
+  }
+});
+
+// Scale
+const pyramidScale = 50;
+pyramidGLTF.scene.scale.set(pyramidScale, pyramidScale, pyramidScale);
+
+// Position
+pyramidGLTF.scene.position.set(400, 10, 400);
+
+// Rotation
+const pyramidRotation = -30;
+pyramidGLTF.scene.rotation.y = degToRad(pyramidRotation);
+
+// Shadows
+setShadowProperties(pyramidGLTF.scene, true, false);
+
+// Add
+scene.add(pyramidGLTF.scene);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// Load object
+const logsGLTF = await gltfLoader.loadAsync("./models/CampFire.glb");
+
+// Change material properties 
+logsGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 1; // No shine
+  }
+});
+
+// Scale
+const logsScale = 4;
+logsGLTF.scene.scale.set(logsScale, logsScale, logsScale);
+
+// Position
+logsGLTF.scene.position.set(-20, 19, -140);
+
+// Rotation
+const logsRotation = 0;
+logsGLTF.scene.rotation.y = degToRad(logsRotation);
+
+// Shadows
+setShadowProperties(logsGLTF.scene, true, false);
+
+// Add
+scene.add(logsGLTF.scene);
 
 
 
