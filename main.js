@@ -225,15 +225,11 @@ grassColorMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
 // Normal
 const grassNormalMap = textureLoader.load("./models/grassTerrain/normal.png")
 
-// Displacement
-const grassDisplacementMap = textureLoader.load("./models/grassTerrain/displacement.tiff");
-
 // Create material
 const grassTerrainMat = new THREE.MeshStandardMaterial({
   map: grassColorMap, 
   color: grassTerrainColor,
   normalMap: grassNormalMap, 
-  displacementMap: grassDisplacementMap,
 });
 
 // Apply material
