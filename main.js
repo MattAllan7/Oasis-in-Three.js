@@ -400,12 +400,12 @@ scene.add(water)
 
 
 // MTL
-const cactusMat = await mtlLoader.loadAsync("./models/cactus/cactus.mtl");
+const cactusMat = await mtlLoader.loadAsync("./models/Cactus/cactus.mtl");
 cactusMat.preload();
 
 // OBJ
 objLoader.setMaterials(cactusMat);
-const cactusOBJ = await objLoader.loadAsync("./models/cactus/cactus.obj");
+const cactusOBJ = await objLoader.loadAsync("./models/Cactus/cactus.obj");
 cactusOBJ.scale.set(2, 2, 2);
 
 // Coordinates
@@ -456,7 +456,7 @@ function createCactus(x, y, z) {
 
 
 
-const treeGLTF = await gltfLoader.loadAsync("./models/palmTree.glb");
+const treeGLTF = await gltfLoader.loadAsync("./models/PalmTree.glb");
 treeGLTF.scene.scale.set(4, 4, 4);
 
 const treeCoordinates = [
@@ -503,7 +503,7 @@ function createTree(x, y, z, r) {
 
 
 
-const rockGLTF = await gltfLoader.loadAsync("./models/rock.glb");
+const rockGLTF = await gltfLoader.loadAsync("./models/Rock.glb");
 
 const rockCoordinates = [
   {x: 85, y: 20, z: 25},
