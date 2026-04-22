@@ -58,15 +58,15 @@ document.body.appendChild(renderer.domElement);
 // Day
 cubeTextureLoader.setPath('images/SkyboxDay/');
 const daySkybox = await cubeTextureLoader.loadAsync([
-  'front.png', 'back.png', 'top.png', 
-  'bottom.png', 'right.png', 'left.png'
+  'FinalDayFront.PNG', 'FinalDayBack.PNG', 'FinalDayTop.PNG', 
+  'bottom.png', 'FinalDayRight.PNG', 'FinalDayLeft.PNG'
 ]);
 scene.background = daySkybox;
 
 // Night
 cubeTextureLoader.setPath('images/SkyboxNight/');
 const nightSkybox = await cubeTextureLoader.loadAsync([
-  'front.png', 'back.png', 'top.png', 
+  'front.png', 'back.png', 'topFixed.png', 
   'bottom.png', 'right.png', 'left.png'
 ]);
 
