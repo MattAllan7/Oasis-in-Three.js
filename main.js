@@ -54,9 +54,9 @@ document.body.appendChild(renderer.domElement);
 
 
 
-const cubeTextureLoader = new THREE.CubeTextureLoader().setPath('images/skyboxDay/');
+const cubeTextureLoader = new THREE.CubeTextureLoader().setPath('images/NewSkyboxDay/');
 const skyboxTexture = await cubeTextureLoader.loadAsync([
-  'DayFront.png', 'DayBack.png', 'DayTop.png', 
+  'DayFront.png', 'DayBack.png', 'DayTopNew.png', 
   'DayBottom.png', 'DayRight.png', 'DayLeft.png'
 ]);
 scene.background = skyboxTexture;
