@@ -451,7 +451,7 @@ const waterColor = new THREE.Color(0x65B6C7)
 
 // Water normal
 // From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kcyt6-4e83fdc6-6977-414d-8a89-4b9a61db15b4 
-const waterNormals = textureLoader.load("./images/waterNormals.jpg")
+const waterNormals = textureLoader.load("./images/waterNormals.jpg");
 waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
 
 // Water options, argument in Water creation. 
@@ -982,8 +982,8 @@ scene.add(pointLightHelper);
 // Texture from: https://www.freeiconspng.com/img/42438 
 
 // Load the fire sprite texture and set its colour space for correct rendering
-const fireTexture = new THREE.TextureLoader().load("./images/fireParticle.png");
-fireTexture.colorSpace = THREE.SRGBColorSpace;
+const fireTexture = textureLoader.load("./images/fireParticle.png");
+// fireTexture.colorSpace = THREE.SRGBColorSpace;
 
 /**
  * Represents a single fire particle. 
