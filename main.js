@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { degToRad, randFloat, randInt } from 'three/src/math/MathUtils.js';
+import { degToRad, randFloat, randFloatSpread, randInt } from 'three/src/math/MathUtils.js';
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -56,7 +56,7 @@ document.body.appendChild(renderer.domElement);
 
 const cameraControls = new PointerLockControls(camera, renderer.domElement);
 
-const moveSpeed = 50;
+const moveSpeed = 500;
 const movement = {
   forward: false,
   backward: false,
@@ -128,20 +128,20 @@ function moveUp(distance) {
 
 // Sunlight
 const sunlightColor = new THREE.Color(0xF5E5C1);
-const sunlightIntensity = 2.5;
+const sunlightIntensity = 2;
 const sunlight = new THREE.DirectionalLight(sunlightColor, sunlightIntensity);
-sunlight.position.set(-700, 0, -700);
+sunlight.position.set(-2100, 0, -2100);
 
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
 sunlight.castShadow = true;
-sunlight.shadow.mapSize.width = 1024;
-sunlight.shadow.mapSize.height = 1024;
-sunlight.shadow.camera.top = 600;
-sunlight.shadow.camera.bottom = -600;
-sunlight.shadow.camera.left = -600;
-sunlight.shadow.camera.right = 600;
-sunlight.shadow.camera.far = 2048;
+sunlight.shadow.mapSize.width = 4096;
+sunlight.shadow.mapSize.height = 4096;
+sunlight.shadow.camera.top = 3000;
+sunlight.shadow.camera.bottom = -3000;
+sunlight.shadow.camera.left = -3000;
+sunlight.shadow.camera.right = 3000;
+sunlight.shadow.camera.far = 9128;
 sunlight.shadow.camera.updateProjectionMatrix();
 
 
@@ -149,18 +149,18 @@ sunlight.shadow.camera.updateProjectionMatrix();
 const moonlightColor = new THREE.Color(0x707980);
 const moonlightIntensity = 2;
 const moonlight = new THREE.DirectionalLight(moonlightColor, moonlightIntensity);
-moonlight.position.set(700, 0, 700);
+moonlight.position.set(2100, 0, 2100);
 
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
 moonlight.castShadow = true;
-moonlight.shadow.mapSize.width = 1024;
-moonlight.shadow.mapSize.height = 1024;
-moonlight.shadow.camera.top = 600;
-moonlight.shadow.camera.bottom = -600;
-moonlight.shadow.camera.left = -600;
-moonlight.shadow.camera.right = 600;
-moonlight.shadow.camera.far = 2048;
+moonlight.shadow.mapSize.width = 4096;
+moonlight.shadow.mapSize.height = 4096;
+moonlight.shadow.camera.top = 3000;
+moonlight.shadow.camera.bottom = -3000;
+moonlight.shadow.camera.left = -3000;
+moonlight.shadow.camera.right = 3000;
+moonlight.shadow.camera.far = 9128;
 moonlight.shadow.camera.updateProjectionMatrix();
 
 
@@ -184,6 +184,10 @@ scene.add(directionalGroup);
 const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
 const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
 scene.add(sunlightHelper, moonlightHelper);
+
+const sunlightShadowHelper = new THREE.CameraHelper(sunlight.shadow.camera);
+const moonlightShadowHelper = new THREE.CameraHelper(moonlight.shadow.camera);
+// scene.add(sunlightShadowHelper, moonlightShadowHelper);
 
 
 
@@ -214,10 +218,10 @@ const textureLoader = new THREE.TextureLoader();
 
 
 // Sand geometry
-const sandPlaneWidth = 1024;
-const sandPlaneHeight = 1024;
-const sandPlaneWidthSeg = 128; 
-const sandPlaneHeightSeg = 128;
+const sandPlaneWidth = 4096;
+const sandPlaneHeight = 4096;
+const sandPlaneWidthSeg = 1024;
+const sandPlaneHeightSeg = 1024;
 const sandGeo = new THREE.PlaneGeometry(
   sandPlaneWidth, 
   sandPlaneHeight, 
@@ -232,15 +236,17 @@ const sandColor = new THREE.Color(0xDED8C5); // Mixed with directional light for
 // Map
 const sandTexture = textureLoader.load("./images/sandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
-sandTexture.repeat.set(64, 64);
+sandTexture.repeat.set(128, 128);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Displacement
-const sandDisplacementMap = textureLoader.load("./images/sandHeightMap.png");
-const sandDisplacementScale = 80;
+const sandDisplacementMap = textureLoader.load("./images/sandHeightMap.jpg");
+const sandDisplacementScale = 160;
 
 // Normal
 const sandNormalMap = textureLoader.load("./images/sandNormalMap.jpg");
+const sandNormalScale = 3;
+sandNormalMap.colorSpace = THREE.NoColorSpace;
 
 // Create material
 const sandMat = new THREE.MeshStandardMaterial({
@@ -249,13 +255,14 @@ const sandMat = new THREE.MeshStandardMaterial({
   displacementMap: sandDisplacementMap, 
   displacementScale: sandDisplacementScale,
   normalMap: sandNormalMap,
+  normalScale: new THREE.Vector2(sandNormalScale, sandNormalScale),
   side: THREE.DoubleSide,
 });
 
 
 // Sand mesh
 const sandMesh = new THREE.Mesh(sandGeo, sandMat);
-sandMesh.position.set(0, 0, 0);
+sandMesh.position.set(0, -20, 0);
 sandMesh.rotateX(degToRad(-90));
 setShadowProperties(sandMesh, false, true);
 
@@ -271,9 +278,9 @@ scene.add(sandMesh);
 
 // GLTF
 const grassTerrainGLTF = await gltfLoader.loadAsync("./models/grassTerrain/grassTerrain.glb");
-const grassTerrainScale = 52;
+const grassTerrainScale = 86;
 grassTerrainGLTF.scene.scale.set(grassTerrainScale, grassTerrainScale, grassTerrainScale);
-grassTerrainGLTF.scene.position.set(0, 10, 0);
+grassTerrainGLTF.scene.position.set(0, 2.8, 0);
 
 
 // Material
@@ -371,8 +378,8 @@ setShadowProperties(grassInstanced, true, true);
 
 const blade = new THREE.Object3D();
 
-const POOL_INNER_RADIUS = 73; // How big the pool of water radius is. 
-const POOL_OUTER_RADIUS = 113; // How far the grass is placed. 
+const POOL_INNER_RADIUS = 120; // How big the pool of water radius is. 
+const POOL_OUTER_RADIUS = 163; // How far the grass is placed. 
 
 for(let i = 0; i < BLADE_COUNT; i++) {
   let angle = degToRad(randFloat(0, 360)); // Random angle between 0 and 360. 
@@ -385,13 +392,13 @@ for(let i = 0; i < BLADE_COUNT; i++) {
 
   // Position
   blade.position.set(x, y, z);
+  
+    // Scale
+    let scale = 0.3 + randFloat(0, 0.3);
+    blade.scale.set(scale, scale, scale);
 
   // Rotation
   blade.rotation.y = degToRad(randFloat(0, 360)); // Random rotation between 0 and 360. 
-
-  // Scale
-  let scale = 0.3 + randFloat(0, 0.3);
-  blade.scale.set(scale, scale, scale);
 
   // Update
   blade.updateMatrix();
@@ -410,8 +417,8 @@ scene.add(grassInstanced);
 
 
 // Water plane, argument in Water creation. 
-const waterWidth = 128;
-const waterHeight = 128;
+const waterWidth = 256;
+const waterHeight = 256;
 const waterGeo = new THREE.PlaneGeometry(
   waterWidth, 
   waterHeight, 
@@ -423,22 +430,17 @@ const waterGeo = new THREE.PlaneGeometry(
 // Water color 
 const waterColor = new THREE.Color(0x65B6C7)
 
-// Water normal, more realistic considering a tiny pool of water. 
+// Water normal
 // From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kcyt6-4e83fdc6-6977-414d-8a89-4b9a61db15b4 
 const waterNormalsSubtle = textureLoader.load("./images/waterNormalsSubtle.jpg")
 waterNormalsSubtle.wrapS = waterNormalsSubtle.wrapT = THREE.RepeatWrapping;
-
-// Water normal, easier to tell the water is animated. 
-// From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kmspc-d364e7a4-2d00-4695-b17e-294a258292e0
-const waterNormalsOther = textureLoader.load("./images/waterNormalsOther.jpg")
-waterNormalsOther.wrapS = waterNormalsOther.wrapT = THREE.RepeatWrapping;
 
 // Water options, argument in Water creation. 
 const waterOptions = {
   textureWidth:    1024,
   textureHeight:   1024,
   alpha:           0.8,
-  waterNormals:    waterNormalsSubtle, // Can use <waterNormalsSubtle> or <waterNormalsOther> here
+  waterNormals:    waterNormalsSubtle,
   sunDirection:    sunlight.position.clone().normalize(),
   sunColor:        sunlight.color.clone(), 
   waterColor:      waterColor, 
@@ -469,30 +471,82 @@ objLoader.setMaterials(cactusMat);
 const cactusOBJ = await objLoader.loadAsync("./models/Cactus/cactus.obj");
 
 // Scale
-const cactusScale = 4;
+const cactusScale = 6;
 cactusOBJ.scale.set(cactusScale, cactusScale, cactusScale);
 
 // Coordinates
 const cactusCoordinates = [
-  {x: -400, y: 35, z: -400},
-  {x: -100, y: 28, z: -300},
-  {x: 250, y: 26, z: -450},
-  {x: 350, y: 20, z: -50},
-  {x: 300, y: 25, z: 150},
-  {x: 150, y: 27, z: 300},
-  {x: 375, y: 33, z: 375},
-  {x: -100, y: 33, z: 350},
-  {x: -300, y: 25, z: 200},
-  {x: -400, y: 21, z: 25},
-  {x: -250, y: 15, z: -100},
-]
+  // Row 1 (z: -1800)
+  {x: -1863, y: 35, z: -1748},
+  {x: -1142, y: 54, z: -1891},
+  {x: -672,  y: 25, z: -1823},
+  {x: 54,    y: 42, z: -1779},
+  {x: 531,   y: 27, z: -1854},
+  {x: 1238,  y: 32, z: -1706},
+  {x: 1747,  y: 39, z: -1893},
+
+  // Row 2 (z: -1200)
+  {x: -1731, y: 32, z: -1147},
+  {x: -1294, y: 28, z: -1263},
+  {x: -541,  y: 28, z: -1183},
+  {x: -87,   y: 43, z: -1298},
+  {x: 642,   y: 57, z: -1154},
+  {x: 1143,  y: 26, z: -1276},
+  {x: 1869,  y: 34, z: -1132},
+
+  // Row 3 (z: -600)
+  {x: -1892, y: 30, z: -673},
+  {x: -1108, y: 12, z: -541},
+  {x: -698,  y: 20, z: -687},
+  {x: 13,    y: 18, z: -642},
+  {x: 547,   y: 40, z: -714},
+  {x: 1261,  y: 23, z: -538},
+  {x: 1714,  y: 36, z: -662},
+
+  // Row 4 (z: 0)
+  {x: -1753, y: 20, z: -83},
+  {x: -1317, y: 9,  z: 94},
+  {x: -638,  y: 26, z: -71},
+  // Skip oasis
+  {x: 583,   y: 42, z: 87},
+  {x: 1094,  y: 20, z: -63},
+  {x: 1836,  y: 20, z: 79},
+
+  // Row 5 (z: 600)
+  {x: -1879, y: 15, z: 531},
+  {x: -1126, y: 25, z: 693},
+  {x: -563,  y: 12, z: 514},
+  {x: 59,    y: 27, z: 582},
+  {x: 641,   y: 14, z: 678},
+  {x: 1173,  y: 22, z: 547},
+  {x: 1748,  y: 42, z: 632},
+
+  // Row 6 (z: 1200)
+  {x: -1814, y: 25, z: 1293},
+  {x: -1267, y: 30, z: 1138},
+  {x: -513,  y: 27, z: 1274},
+  {x: 79,    y: 45, z: 1107},
+  {x: 558,   y: 34, z: 1289},
+  {x: 1302,  y: 35, z: 1154},
+  {x: 1731,  y: 37, z: 1247},
+
+  // Row 7 (z: 1800)
+  {x: -1708, y: 30, z: 1863},
+  {x: -1259, y: 23, z: 1731},
+  {x: -547,  y: 26, z: 1894},
+  {x: 93,    y: 31, z: 1748},
+  {x: 638,   y: 30, z: 1817},
+  {x: 1184,  y: 22, z: 1762},
+  {x: 1853,  y: 40, z: 1839},
+];
+
 
 // Add
 cactusCoordinates.forEach(coord => {
-  let cactus = createCactus(coord.x, coord.y, coord.z);
-  scene.add(cactus);
-});
-
+    let cactus = createCactus(coord.x, coord.y, coord.z);
+    scene.add(cactus);
+  });
+  
 
 /**
  * Creates a clone of a tree .obj model and sets the position 
@@ -532,14 +586,14 @@ treeGLTF.scene.traverse(function (child) {
 });
 
 // Scale
-const treeScale = 9.5;
+const treeScale = 12;
 treeGLTF.scene.scale.set(treeScale, treeScale, treeScale);
 
 // Coordintaes
 const treeCoordinates = [
-  {x: 60, y:18, z:60, r: 45},
-  {x: -90, y:18, z:10, r: 270},
-  {x: 20, y:18, z:-80, r: 150},
+  {x: 125,  y:18, z:60,   r: 45},
+  {x: -140, y:18, z:10,   r: 270},
+  {x: 20,   y:18, z:-140, r: 150},
 ];
 
 // Add
@@ -593,13 +647,13 @@ rockGLTF.scene.traverse(function (child) {
 
 // Coordinates
 const rockCoordinates = [
-  {x: 85, y: 20, z: 25},
-  {x: 65, y: 20, z: -55},
-  {x: -25, y: 20, z: -85},
-  {x: -80, y: 20, z: -40},
-  {x: -95, y: 20, z: -10},
-  {x: -55, y: 20, z: 70},
-  {x: 20, y: 20, z: 95},
+  {x: 145,  y: 20, z: 5},
+  {x: 95,   y: 20, z: -95},
+  {x: -45,  y: 20, z: -135},
+  {x: -130, y: 20, z: -55},
+  {x: -140, y: 20, z: -30},
+  {x: -95,  y: 20, z: 100},
+  {x: 20,   y: 20, z: 135},
 ];
 
 // Add
@@ -624,18 +678,18 @@ function createRock(x, y, z) {
 
   // Position
   rock.position.set(x, y, z);
-
+  
+  // Scale
+  let minScale = 3;
+  let maxScale = 5;
+  let rockScale = randFloat(minScale, maxScale);
+  rock.scale.set(rockScale, rockScale, rockScale);
+  
   // Rotation
   let minRotation = 0;
   let maxRotation = 360;
   let rotation = degToRad(randFloat(minRotation, maxRotation));
   rock.rotateY(rotation);
-
-  // Scale
-  let minScale = 4;
-  let maxScale = 5;
-  let rockScale = randFloat(minScale, maxScale);
-  rock.scale.set(rockScale, rockScale, rockScale);
 
   // Shadows
   setShadowProperties(rock, true, false);
@@ -659,12 +713,12 @@ camelGLTF.scene.traverse(function (child) {
   }
 });
 
+// Position
+camelGLTF.scene.position.set(70, 19, 120);
+
 // Scale
 const camelScale = 8;
 camelGLTF.scene.scale.set(camelScale, camelScale, camelScale);
-
-// Position
-camelGLTF.scene.position.set(70, 19, 120);
 
 // Rotation
 const camelRotaiton = -110;
@@ -692,12 +746,12 @@ tentGLTF.scene.traverse(function (child) {
   }
 });
 
+// Position
+tentGLTF.scene.position.set(-155, 20.1, -155);
+
 // Scale
 const tentScale = 10;
 tentGLTF.scene.scale.set(tentScale, tentScale, tentScale);
-
-// Position
-tentGLTF.scene.position.set(-105, 20.1, -105);
 
 // Rotation
 const tentRotation = 30;
@@ -708,6 +762,39 @@ setShadowProperties(tentGLTF.scene, true, false);
 
 // Add
 scene.add(tentGLTF.scene);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// Load object
+const logsGLTF = await gltfLoader.loadAsync("./models/Campfire.glb");
+
+// Change material properties 
+logsGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 1; // No shine
+  }
+});
+
+// Position
+logsGLTF.scene.position.set(-20, 19.75, -220);
+
+// Scale
+const logsScale = 6;
+logsGLTF.scene.scale.set(logsScale, logsScale, logsScale);
+
+// Rotation
+const logsRotation = 0;
+logsGLTF.scene.rotation.y = degToRad(logsRotation);
+
+// Shadows
+setShadowProperties(logsGLTF.scene, true, false);
+
+// Add
+scene.add(logsGLTF.scene);
 
 
 
@@ -726,55 +813,43 @@ pyramidGLTF.scene.traverse(function (child) {
   }
 });
 
-// Scale
-const pyramidScale = 50;
-pyramidGLTF.scene.scale.set(pyramidScale, pyramidScale, pyramidScale);
-
-// Position
-pyramidGLTF.scene.position.set(400, 10, 400);
-
-// Rotation
-const pyramidRotation = -30;
-pyramidGLTF.scene.rotation.y = degToRad(pyramidRotation);
-
 // Shadows
 setShadowProperties(pyramidGLTF.scene, true, false);
 
+// Coordinates
+const pyramidCoordinates = [
+  {x: 1500, y: 10, z: 1500, scale: 2.5, rotation: -30},
+  {x: 1700, y: 10, z: 900,  scale: 2,   rotation: -15},
+];
+
 // Add
-scene.add(pyramidGLTF.scene);
-
-
-
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
-
-
-
-// Load object
-const logsGLTF = await gltfLoader.loadAsync("./models/CampFire.glb");
-
-// Change material properties 
-logsGLTF.scene.traverse(function (child) {
-  if(child.isMesh) {
-    child.material.roughness = 1; // No shine
-  }
+pyramidCoordinates.forEach(coord => {
+  let pyramid = createPyramid(coord.x, coord.y, coord.z, coord.scale, coord.rotation);
+  scene.add(pyramid);
 });
 
-// Scale
-const logsScale = 4;
-logsGLTF.scene.scale.set(logsScale, logsScale, logsScale);
 
-// Position
-logsGLTF.scene.position.set(-20, 19, -140);
+/**
+ * Creates a clone of a pyramid .glb model. 
+ * Sets the position to the specified (x, y, z) coordinate, 
+ * sets the specified scale and rotation. 
+ * 
+ * @param {number} x 
+ * @param {number} y 
+ * @param {number} z 
+ * @param {number} scale 
+ * @param {number} rotation 
+ * @returns A clone of the pyramid model. 
+ */
+function createPyramid(x, y, z, scale, rotation) {
+  let pyramid = pyramidGLTF.scene.clone();
 
-// Rotation
-const logsRotation = 0;
-logsGLTF.scene.rotation.y = degToRad(logsRotation);
+  pyramid.position.set(x, y, z);
+  pyramid.scale.set(scale, scale, scale);
+  pyramid.rotation.y = degToRad(rotation);
 
-// Shadows
-setShadowProperties(logsGLTF.scene, true, false);
-
-// Add
-scene.add(logsGLTF.scene);
+  return pyramid;
+}
 
 
 
@@ -789,36 +864,36 @@ const fishGLTF = await gltfLoader.loadAsync("./models/Fish.glb");
 const fishCoordinates = [
   // Top 3x3
   {x: -2, y: 2, z: -4},
-  {x: 0, y: 4, z: -2},
-  {x: 2, y: 2, z: -4},
+  {x: 0,  y: 4, z: -2},
+  {x: 2,  y: 2, z: -4},
   {x: -3, y: 2, z: 0},
-  {x: 0, y: 2, z: 0},
-  {x: 3, y: 2, z: 0},
+  {x: 0,  y: 2, z: 0},
+  {x: 3,  y: 2, z: 0},
   {x: -2, y: 2, z: 4},
-  {x: 0, y: 4, z: 2},
-  {x: 2, y: 2, z: 4},
+  {x: 0,  y: 4, z: 2},
+  {x: 2,  y: 2, z: 4},
   
   // Middle 3x3
   {x: -3, y: 0, z: -3},
-  {x: 0, y: 0, z: -6},
-  {x: 3, y: 0, z: -3},
+  {x: 0,  y: 0, z: -6},
+  {x: 3,  y: 0, z: -3},
   {x: -4, y: 0, z: 0},
-  // {x: 0, y: 0, z: 0},
-  {x: 4, y: 0, z: 0},
+  // None in middle
+  {x: 4,  y: 0, z: 0},
   {x: -3, y: 0, z: 3},
-  {x: 0, y: 0, z: 6},
-  {x: 3, y: 0, z: 3},
+  {x: 0,  y: 0, z: 6},
+  {x: 3,  y: 0, z: 3},
 
   // Bottom 3x3
   {x: -2, y: -2, z: -4},
-  {x: 0, y: -4, z: -2},
-  {x: 2, y: -2, z: -4},
+  {x: 0,  y: -4, z: -2},
+  {x: 2,  y: -2, z: -4},
   {x: -3, y: -2, z: 0},
-  {x: 0, y: -2, z: 0},
-  {x: 3, y: -2, z: 0},
+  {x: 0,  y: -2, z: 0},
+  {x: 3,  y: -2, z: 0},
   {x: -2, y: -2, z: 4},
-  {x: 0, y: -4, z: 2},
-  {x: 2, y: -2, z: 4},
+  {x: 0,  y: -4, z: 2},
+  {x: 2,  y: -2, z: 4},
 ];
 
 // Add
@@ -866,8 +941,8 @@ function createFish(x, y, z) {
  * Translates each fish in a school to the perimeter of the water. 
  */
 function translateToPerimeter() {
-  let xOffset = 35;
-  let yOffset = 8;
+  let xOffset = 55;
+  let yOffset = 0;
 
   school.children.forEach((fish) => {
     let curPos = fish.position;
