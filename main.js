@@ -45,7 +45,7 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 document.body.appendChild(renderer.domElement);
 
 
@@ -122,7 +122,7 @@ function moveUp(distance) {
 
 
 
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Directional and Ambient Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 
 
@@ -330,12 +330,12 @@ scene.add(grassTerrainGLTF.scene);
 
 const grassGeo = new THREE.BufferGeometry();
 
-const vertices = new Float32Array([
+const grassVertices = new Float32Array([
   0, 8, 0, // top
   -1, 0, 0, // left
   1, 0, 0, // right
 ]);
-grassGeo.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+grassGeo.setAttribute('position', new THREE.BufferAttribute(grassVertices, 3));
 
 
 // Shader material
@@ -732,6 +732,39 @@ scene.add(camelGLTF.scene);
 
 
 
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Carpet >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// Load object
+const carpetGLTF = await gltfLoader.loadAsync("./models/Carpet.glb");
+
+// Change material properties 
+carpetGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 1; // Fully diffuse, no shine
+  }
+});
+
+// Position
+carpetGLTF.scene.position.set(-60, 20, -240);
+
+// Scale
+const carpetScale = 16;
+carpetGLTF.scene.scale.set(carpetScale, carpetScale, carpetScale);
+
+// Rotation
+const carpetRotation = -30;
+carpetGLTF.scene.rotation.y = degToRad(carpetRotation);
+
+// Shadows
+setShadowProperties(carpetGLTF.scene, true, false);
+
+// Add
+scene.add(carpetGLTF.scene);
+
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Tent >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 
@@ -765,9 +798,11 @@ scene.add(tentGLTF.scene);
 
 
 
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire Logs >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 
+
+// Logs
 
 // Load object
 const logsGLTF = await gltfLoader.loadAsync("./models/Campfire.glb");
@@ -780,7 +815,7 @@ logsGLTF.scene.traverse(function (child) {
 });
 
 // Position
-logsGLTF.scene.position.set(-20, 19.75, -220);
+logsGLTF.scene.position.set(-18, 19.75, -220);
 
 // Scale
 const logsScale = 6;
@@ -795,6 +830,235 @@ setShadowProperties(logsGLTF.scene, true, false);
 
 // Add
 scene.add(logsGLTF.scene);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire Point Light >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+const pointLightColor = new THREE.Color(0xD98A29);
+const pointLightIntensity = 300;
+const pointLightDistance = 0;
+const pointLightDecay = 1;
+const pointLight = new THREE.PointLight(
+  pointLightColor, 
+  pointLightIntensity, 
+  pointLightDistance, 
+  pointLightDecay
+);
+
+pointLight.position.set(-20, 40, -220);
+pointLight.castShadow = true;
+scene.add(pointLight);
+
+const pointLightHelper = new THREE.PointLightHelper(pointLight, 10);
+scene.add(pointLightHelper);
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Campfire Particles >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// Logic from: https://www.youtube.com/watch?v=PUpz0T4L20g, 
+//    and: https://github.com/ThaboModise/Live_TutorialScript/blob/master/IntermediateTutorialSeries/ParticleEmitter_For_Tutorial.html
+// Texture from: https://www.freeiconspng.com/img/42438 
+
+// Load the fire sprite texture and set its colour space for correct rendering
+const fireTexture = new THREE.TextureLoader().load("./images/fireParticle2.png");
+fireTexture.colorSpace = THREE.SRGBColorSpace;
+
+/**
+ * Represents a single fire particle. 
+ * Spawns at a random offset within the emitter area, rises upward each frame,
+ * rotates, and lerps its colour toward a target over its lifetime.
+ */
+class CustomParticle extends THREE.Sprite {
+
+
+  /**
+   * @param {THREE.Texture} texture The sprite image to display. 
+   * @param {number} color          Initial colour (hex). 
+   * @param {number} lerpToColor    Target colour the particle fades towards (hex). 
+   * @param {number} alphaTest      Pixels below this alpha value are discarded.
+   * @param {number} opacity        Overall opacity of the sprite.
+   * @param {number} myRotation     Fixed rotation delta added every frame.
+   * @param {number} randomScale    Upper bound for a randomised scale (min 1.0).
+   * @param {number} randomRotation Upper bound for an additional randomised rotation delta.
+   */
+  constructor(texture, color, lerpToColor, alphaTest, opacity, myRotation, randomScale, randomRotation) {
+
+    // Create the sprite material with the provided visual properties. 
+    let material = new THREE.SpriteMaterial({
+      color: color, 
+      map: texture, 
+      alphaTest: alphaTest, 
+      opacity: opacity, 
+      transparent: true
+    });
+
+    let scale;
+    let rotation = myRotation;
+    let randRotation = randomRotation;
+
+    // If no randomScale is provided fall back to a scale of 1, 
+    // otherwise pick a random value and clamp it to a minimum of 1. 
+    if(randomScale === undefined) {
+      scale = 1.0;
+    } else {
+      let randScale = Math.random() * randomScale;
+      scale = randScale > 1.0 ? randScale: 1.0;
+    }
+
+    // If randomRotation is provided pick a random rotation delta,
+    // clamped to a minimum of 0.01 so the particle always spins slightly
+    if (randomRotation !== undefined) {
+      randRotation = Math.random() * randomRotation;
+      randRotation = randRotation > 0.0 ? randRotation: 0.01;
+    }
+    
+    // Initialize the parent THREE.Sprite with the constructed material. 
+    super(material);
+
+    // Position
+    this.position.set(randFloatSpread(15), 0, randFloatSpread(15));
+
+    // Time
+    this.startTime = timerScene.getElapsed();
+    this.currentTime;
+
+    // Scale
+    this.scale.set(scale, scale, scale);
+
+    // Rotation
+    this.randRotation = randRotation;
+    this.myRotation = rotation;
+
+    // Lerp
+    this.lerpToColor = lerpToColor;
+    
+    // Additive blending makes overlapping particles brighten each other, simulating fire glow. 
+    this.material.blending = THREE.AdditiveBlending;
+  }
+
+
+  /**
+   * Called every frame by the emitter.
+   * Moves the particle upward, applies rotation, and transitions its colour.
+   */
+  update() {
+  
+    // Float
+    this.position.y += 0.25;
+
+    // Sync
+    this.updateMatrix();
+    this.updateMatrixWorld();
+
+    // Apply Rotations
+    if(this.myRotation !== undefined) this.material.rotation += this.myRotation;
+    if(this.randRotation !== undefined) this.material.rotation += this.randRotation;
+    
+    // Color lerp towards target color
+    this.material.color.lerp(new THREE.Color(this.lerpToColor), 0.003);
+  }
+}
+
+
+/**
+ * Spawns and manages a collection of CustomParticle instances.
+ * Call emitParticle() and updateParticles() each frame from the render loop.
+ */
+class ParticleEmitter {
+
+  // Same as CustomParticle constructor
+  constructor(texture, color, lerpToColor, alphaTest, opacity, myRotation, randomScale, randomRotation) {
+
+    // Live particle array
+    this.particles = [];
+
+    this.group = new THREE.Group();
+    this.timer = 0;
+    this.color = color;
+    this.lerpToColor = lerpToColor;
+    this.texture = texture;
+    this.alphaTest = alphaTest;
+    this.opacity = opacity;
+    this.myRotation = myRotation;
+    this.randomScale = randomScale;
+    this.randomRotation = randomRotation
+
+    // Add the group to the scene immediately so spawned particles are visible. 
+    scene.add(this.group);
+  }
+
+
+  /**
+   * Spawns one new particle and adds it to the group and tracking array.
+   * Call once per frame from the render loop.
+   */
+  emitParticle() {
+    const particle = new CustomParticle(
+      this.texture, 
+      this.color, 
+      this.lerpToColor, 
+      this.alphaTest, 
+      this.opacity, 
+      this.myRotation, 
+      this.randomScale, 
+      this.randomRotation
+    );
+
+    // Stamp the current time so the particle knows when it was born. 
+    particle.currentTime = timerScene.getElapsed();
+
+    this.group.add(particle);
+    this.particles.push(particle);
+  }
+
+
+  /**
+   * Iterates all live particles each frame.
+   * Removes particles that have exceeded their 1-second lifetime, then calls update() on the rest.
+   */
+  updateParticles() {
+    this.particles.forEach((particle) => {
+      particle.currentTime = timerScene.getElapsed();
+      if((particle.currentTime - particle.startTime) > 1) { // 1 second is the lifetime. 
+        this.group.remove(particle);
+      }
+      
+      particle.update();
+    });
+  }
+
+}
+
+
+const particleParams = {
+  texture : fireTexture,
+  color : 0xff0000,
+  lerpToColor: 0xaaaa00,
+  alphaTest : 0.001,
+  opacity : 0.3,
+  rotationFactor : undefined,
+  scaleFactor : 10, 
+  randRotationFactor : 0.003
+}
+
+const particleEmitter = new ParticleEmitter(
+  particleParams.texture, 
+  particleParams.color, 
+  particleParams.lerpToColor, 
+  particleParams.alphaTest, 
+  particleParams.opacity, 
+  particleParams.rotationFactor, 
+  particleParams.scaleFactor, 
+  particleParams.randRotationFactor
+);
+
+particleEmitter.group.position.set(-20, 28, -220);
 
 
 
@@ -863,37 +1127,37 @@ const fishGLTF = await gltfLoader.loadAsync("./models/Fish.glb");
 // Coordinates
 const fishCoordinates = [
   // Top 3x3
-  {x: -2, y: 2, z: -4},
-  {x: 0,  y: 4, z: -2},
-  {x: 2,  y: 2, z: -4},
-  {x: -3, y: 2, z: 0},
-  {x: 0,  y: 2, z: 0},
-  {x: 3,  y: 2, z: 0},
-  {x: -2, y: 2, z: 4},
-  {x: 0,  y: 4, z: 2},
-  {x: 2,  y: 2, z: 4},
+  {x: -4, y: 4, z: -8},
+  {x: 0,  y: 8, z: -4},
+  {x: 4,  y: 4, z: -8},
+  {x: -6, y: 4, z: 0},
+  {x: 0,  y: 4, z: 0},
+  {x: 6,  y: 4, z: 0},
+  {x: -4, y: 4, z: 8},
+  {x: 0,  y: 8, z: 4},
+  {x: 4,  y: 4, z: 8},
   
   // Middle 3x3
-  {x: -3, y: 0, z: -3},
+  {x: -6, y: 0, z: -6},
   {x: 0,  y: 0, z: -6},
-  {x: 3,  y: 0, z: -3},
-  {x: -4, y: 0, z: 0},
+  {x: 6,  y: 0, z: -6},
+  {x: -8, y: 0, z: 0},
   // None in middle
-  {x: 4,  y: 0, z: 0},
-  {x: -3, y: 0, z: 3},
+  {x: 8,  y: 0, z: 0},
+  {x: -6, y: 0, z: 6},
   {x: 0,  y: 0, z: 6},
-  {x: 3,  y: 0, z: 3},
+  {x: 6,  y: 0, z: 6},
 
   // Bottom 3x3
-  {x: -2, y: -2, z: -4},
-  {x: 0,  y: -4, z: -2},
-  {x: 2,  y: -2, z: -4},
-  {x: -3, y: -2, z: 0},
-  {x: 0,  y: -2, z: 0},
-  {x: 3,  y: -2, z: 0},
-  {x: -2, y: -2, z: 4},
-  {x: 0,  y: -4, z: 2},
-  {x: 2,  y: -2, z: 4},
+  {x: -4, y: -4, z: -8},
+  {x: 0,  y: -8, z: -4},
+  {x: 4,  y: -4, z: -8},
+  {x: -6, y: -4, z: 0},
+  {x: 0,  y: -4, z: 0},
+  {x: 6,  y: -4, z: 0},
+  {x: -4, y: -4, z: 8},
+  {x: 0,  y: -8, z: 4},
+  {x: 4,  y: -4, z: 8},
 ];
 
 // Add
@@ -929,6 +1193,9 @@ function createSchool() {
  */
 function createFish(x, y, z) {
   let fish = fishGLTF.scene.clone();
+
+  let fishScale = 1.5;
+  fish.scale.set(fishScale, fishScale, fishScale);
 
   // Position
   fish.position.set(x, y, z);
@@ -1055,6 +1322,11 @@ function render() {
   // From https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html
   water.material.uniforms['time'].value += timerScene.getDelta();
   grassMat.uniforms['time'].value += timerScene.getDelta();
+
+
+  particleEmitter.emitParticle();
+
+  particleEmitter.updateParticles();
 
 
   // Fish
