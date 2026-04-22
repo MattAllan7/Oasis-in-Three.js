@@ -1055,7 +1055,7 @@ class CustomParticle extends THREE.Sprite {
     this.lerpToColor = lerpToColor;
     
     // Additive blending makes overlapping particles brighten each other, simulating fire glow. 
-    // this.material.blending = THREE.AdditiveBlending; // Made the particles not appear, so it's commented out. 
+    this.material.blending = THREE.AdditiveBlending;
   }
 
 
@@ -1141,8 +1141,10 @@ class ParticleEmitter {
   updateParticles() {
     this.particles.forEach((particle) => {
       particle.currentTime = timerScene.getElapsed();
+      
       if((particle.currentTime - particle.startTime) > 1) { // 1 second is the lifetime. 
         this.group.remove(particle);
+        particle.material.dispose();
       }
       
       particle.update();
