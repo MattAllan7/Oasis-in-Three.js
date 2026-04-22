@@ -982,7 +982,7 @@ scene.add(pointLightHelper);
 // Texture from: https://www.freeiconspng.com/img/42438 
 
 // Load the fire sprite texture and set its colour space for correct rendering
-const fireTexture = textureLoader.load("./images/fireParticle.png");
+const fireTexture = textureLoader.load("./images/fireParticleWhite.png");
 // fireTexture.colorSpace = THREE.SRGBColorSpace;
 
 /**
