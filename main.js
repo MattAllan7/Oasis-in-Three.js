@@ -1055,7 +1055,7 @@ class CustomParticle extends THREE.Sprite {
     this.lerpToColor = lerpToColor;
     
     // Additive blending makes overlapping particles brighten each other, simulating fire glow. 
-    this.material.blending = THREE.AdditiveBlending;
+    // this.material.blending = THREE.AdditiveBlending; // Made the particles not appear, so it's commented out. 
   }
 
 
