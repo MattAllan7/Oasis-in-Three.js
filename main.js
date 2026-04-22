@@ -833,7 +833,7 @@ camelGLTF.scene.traverse(function (child) {
 camelGLTF.scene.position.set(70, 19, 120);
 
 // Scale
-const camelScale = 8;
+const camelScale = 14;
 camelGLTF.scene.scale.set(camelScale, camelScale, camelScale);
 
 // Rotation
