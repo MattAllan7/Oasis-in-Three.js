@@ -188,7 +188,7 @@ moonlight.shadow.camera.updateProjectionMatrix();
 
 // Ambient light
 const ambientColor = new THREE.Color(0xFFFFFF);
-const ambientIntensity = 0.1;
+const ambientIntensity = 0.01;
 const ambientLight = new THREE.AmbientLight(ambientColor, ambientIntensity);
 
 scene.add(ambientLight);
@@ -256,7 +256,7 @@ const sandGeo = new THREE.PlaneGeometry(
 // Map
 const sandTexture = textureLoader.load("./images/Sand/daySandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
-sandTexture.repeat.set(64, 64);
+sandTexture.repeat.set(128, 128);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Displacement
