@@ -297,9 +297,9 @@ scene.add(sandMesh);
 
 // GLTF
 const grassTerrainGLTF = await gltfLoader.loadAsync("./models/GrassTerrain/grassTerrain.glb");
-const grassTerrainScale = 86;
+const grassTerrainScale = 1;
 grassTerrainGLTF.scene.scale.set(grassTerrainScale, grassTerrainScale, grassTerrainScale);
-grassTerrainGLTF.scene.position.set(0, 2.8, 0);
+grassTerrainGLTF.scene.position.set(0, 16, 0);
 
 
 // Material
@@ -308,7 +308,7 @@ grassTerrainGLTF.scene.position.set(0, 2.8, 0);
 const grassTerrainColor = new THREE.Color(0xB1D18C); 
 
 // Map
-const grassColorMap = textureLoader.load("./models/GrassTerrain/color.jpg");
+const grassColorMap = textureLoader.load("./models/GrassTerrain/map.jpg");
 grassColorMap.wrapS = grassColorMap.wrapT = THREE.RepeatWrapping;
 grassColorMap.repeat.set(16, 16);
 grassColorMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -397,8 +397,8 @@ setShadowProperties(grassInstanced, true, true);
 
 const blade = new THREE.Object3D();
 
-const POOL_INNER_RADIUS = 120; // How big the pool of water radius is. 
-const POOL_OUTER_RADIUS = 163; // How far the grass is placed. 
+const POOL_INNER_RADIUS = 122; // How big the pool of water radius is. 
+const POOL_OUTER_RADIUS = 162; // How far the grass is placed. 
 
 for(let i = 0; i < BLADE_COUNT; i++) {
   let angle = degToRad(randFloat(0, 360)); // Random angle between 0 and 360. 
