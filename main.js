@@ -33,8 +33,8 @@ const scene = new THREE.Scene();
 
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
-camera.position.set(-200, 50, 0);
-camera.lookAt(0, 50, 0,);
+camera.position.set(-330, 65, -160);
+camera.lookAt(0, 65, 0,);
 
 
 
@@ -78,7 +78,8 @@ const nightSkybox = await cubeTextureLoader.loadAsync([
 
 const cameraControls = new PointerLockControls(camera, renderer.domElement);
 
-const moveSpeed = 500;
+const moveSpeed = {speed: 100};
+
 const movement = {
   forward: false,
   backward: false,
@@ -88,47 +89,71 @@ const movement = {
   down: false,
 };
 
+const lighting = {
+  lightUp: false,
+  lightDown: false, 
+}
+
 document.addEventListener('click', function () {cameraControls.lock();}, false);
 
 document.addEventListener('keydown', function (event) {
   switch (event.code) {
-    case 'KeyW': movement.forward = true; break;
-    case 'KeyA': movement.left = true; break;
+    case 'KeyW': movement.forward  = true; break;
+    case 'KeyA': movement.left     = true; break;
     case 'KeyS': movement.backward = true; break;
-    case 'KeyD': movement.right = true; break;
-    case 'Space': movement.up = true; break;
+    case 'KeyD': movement.right    = true; break;
+
+    case 'Space':     movement.up   = true; break;
     case 'ShiftLeft': movement.down = true; break;
+
+    case 'KeyQ': lighting.lightDown  = true; break;
+    case 'KeyE': lighting.lightUp    = true; break;
   }
 });  
 
 document.addEventListener('keyup', function (event) {
   switch (event.code) {
-    case 'KeyW': movement.forward = false; break;
+    case 'KeyW': movement.forward  = false; break;
     case 'KeyS': movement.backward = false; break;
-    case 'KeyA': movement.left = false; break;
-    case 'KeyD': movement.right = false; break;
-    case 'Space': movement.up = false; break;
+    case 'KeyA': movement.left     = false; break;
+    case 'KeyD': movement.right    = false; break;
+
+    case 'Space':     movement.up   = false; break;
     case 'ShiftLeft': movement.down = false; break;
+
+    case 'KeyQ': lighting.lightDown = false; break;
+    case 'KeyE': lighting.lightUp   = false; break;
   }
 });
 
 const timerMovement = new THREE.Timer();
 timerMovement.connect(document);
+const lightRotateSpeed = 1.5;
 
 /**
  * Updates the camera position based on which movement keys are currently being pressed.
  * The camera movement is frame-rate independent since the movement speed is multiplied by the time delta between frames. 
  * The camera moves in the direction it is currently facing, so the movement directions are relative to the camera's orientation.
  */
-function updateMovement() {
+function updateInput() {
   timerMovement.update();
   const delta = timerMovement.getDelta();
-  if (movement.forward)  cameraControls.moveForward(moveSpeed * delta);
-  if (movement.backward) cameraControls.moveForward(-moveSpeed * delta);
-  if (movement.left)     cameraControls.moveRight(-moveSpeed * delta);
-  if (movement.right)    cameraControls.moveRight(moveSpeed * delta);
-  if (movement.up)       moveUp(moveSpeed * delta);
-  if (movement.down)     moveUp(-moveSpeed * delta);
+
+  // Movement
+
+  if(movement.forward)  cameraControls.moveForward(moveSpeed.speed * delta);
+  if(movement.backward) cameraControls.moveForward(-moveSpeed.speed * delta);
+  if(movement.left)     cameraControls.moveRight(-moveSpeed.speed * delta);
+  if(movement.right)    cameraControls.moveRight(moveSpeed.speed * delta);
+
+  // Uncomment below to fly with Space and Left Shift:
+  // if (movement.up)       moveUp(moveSpeed.speed * delta);
+  // if (movement.down)     moveUp(-moveSpeed.speed * delta);
+
+  // Lighting
+
+  if (lighting.lightUp)   directionalGroup.rotation.x = Math.min(Math.PI * 4, directionalGroup.rotation.x + lightRotateSpeed * delta);
+  if (lighting.lightDown) directionalGroup.rotation.x = Math.max(0,           directionalGroup.rotation.x - lightRotateSpeed * delta);
 }
 
 
@@ -205,7 +230,7 @@ scene.add(directionalGroup);
 // Directional helpers
 const sunlightHelper = new THREE.DirectionalLightHelper(sunlight, 50);
 const moonlightHelper = new THREE.DirectionalLightHelper(moonlight, 50);
-scene.add(sunlightHelper, moonlightHelper);
+// scene.add(sunlightHelper, moonlightHelper);
 
 const sunlightShadowHelper = new THREE.CameraHelper(sunlight.shadow.camera);
 const moonlightShadowHelper = new THREE.CameraHelper(moonlight.shadow.camera);
@@ -220,11 +245,23 @@ const moonlightShadowHelper = new THREE.CameraHelper(moonlight.shadow.camera);
 // https://sbcode.net/threejs/dat-gui-module/
 
 
-const gui = new GUI();
+const gui = new GUI({width: 470});
 
-const lightFolder = gui.addFolder('Light');
-lightFolder.add(directionalGroup.rotation, 'x', 0, Math.PI * 4, 0.001);
+// Time controls message
+const timeTutorial = {
+  message: "\'Q\' and \'E\' to change time, or the Light.x slider"
+}
+gui.add(timeTutorial, "message");
+
+// Time slider
+const lightFolder = gui.addFolder("Light");
+lightFolder.add(directionalGroup.rotation, "x", 0, Math.PI * 4, 0.001);
 lightFolder.open();
+
+// Movement speed slider
+const movementFolder = gui.addFolder('Movement');
+movementFolder.add(moveSpeed, "speed", 0, 1000, 1);
+movementFolder.open();
 
 
 
@@ -969,7 +1006,7 @@ pointLight.castShadow = true;
 scene.add(pointLight);
 
 const pointLightHelper = new THREE.PointLightHelper(pointLight, 10);
-scene.add(pointLightHelper);
+// scene.add(pointLightHelper);
 
 
 
@@ -1402,7 +1439,7 @@ const lightWorldPos = new THREE.Vector3();
 
 function render() {
     
-  updateMovement();
+  updateInput();
   timerScene.update();
 
 
@@ -1447,7 +1484,6 @@ function render() {
 
 
   particleEmitter.emitParticle();
-
   particleEmitter.updateParticles();
 
 
