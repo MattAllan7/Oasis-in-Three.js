@@ -13,6 +13,7 @@ import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockCont
 
 
 
+const cubeTextureLoader = new THREE.CubeTextureLoader()
 const mtlLoader = new MTLLoader();
 const objLoader = new OBJLoader();
 const gltfLoader = new GLTFLoader();
@@ -54,12 +55,20 @@ document.body.appendChild(renderer.domElement);
 
 
 
-const cubeTextureLoader = new THREE.CubeTextureLoader().setPath('images/NewSkyboxDay/');
-const skyboxTexture = await cubeTextureLoader.loadAsync([
-  'DayFront.png', 'DayBack.png', 'DayTop.png', 
-  'DayBottom.png', 'DayRight.png', 'DayLeft.png'
+// Day
+cubeTextureLoader.setPath('images/SkyboxDay/');
+const daySkybox = await cubeTextureLoader.loadAsync([
+  'front.png', 'back.png', 'top.png', 
+  'bottom.png', 'right.png', 'left.png'
 ]);
-scene.background = skyboxTexture;
+scene.background = daySkybox;
+
+// Night
+cubeTextureLoader.setPath('images/SkyboxNight/');
+const nightSkybox = await cubeTextureLoader.loadAsync([
+  'front.png', 'back.png', 'top.png', 
+  'bottom.png', 'right.png', 'left.png'
+]);
 
 
 
@@ -227,7 +236,6 @@ const textureLoader = new THREE.TextureLoader();
 
 // Height map logic from: https://www.youtube.com/watch?v=wULUAhckH9w. 
 // Height map image from: https://www.deviantart.com/elmininostock/art/Sand-Dunes-Height-Map-seamless-591456783. 
-// Sand texture from: https://texturelabs.org/textures/soil_126/. 
 
 
 // Sand geometry
@@ -243,27 +251,25 @@ const sandGeo = new THREE.PlaneGeometry(
 );
 
 
-// Ground material
-const sandColor = new THREE.Color(0xDED8C5); // Mixed with directional light for final color. 
+// Sand material
 
 // Map
-const sandTexture = textureLoader.load("./images/sandTexture.png");
+const sandTexture = textureLoader.load("./images/Sand/daySandTexture.png");
 sandTexture.wrapS = sandTexture.wrapT = THREE.RepeatWrapping;
-sandTexture.repeat.set(128, 128);
+sandTexture.repeat.set(64, 64);
 sandTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Displacement
-const sandDisplacementMap = textureLoader.load("./images/sandHeightMap.jpg");
+const sandDisplacementMap = textureLoader.load("./images/Sand/sandHeightMap.jpg");
 const sandDisplacementScale = 160;
 
 // Normal
-const sandNormalMap = textureLoader.load("./images/sandNormalMap.jpg");
+const sandNormalMap = textureLoader.load("./images/Sand/sandNormalMap.jpg");
 const sandNormalScale = 3;
 sandNormalMap.colorSpace = THREE.NoColorSpace;
 
 // Create material
 const sandMat = new THREE.MeshStandardMaterial({
-  color: sandColor, 
   map: sandTexture,
   displacementMap: sandDisplacementMap, 
   displacementScale: sandDisplacementScale,
@@ -290,7 +296,7 @@ scene.add(sandMesh);
 // Texture from: https://www.poliigon.com/texture/flat-grass-texture/4585
 
 // GLTF
-const grassTerrainGLTF = await gltfLoader.loadAsync("./models/grassTerrain/grassTerrain.glb");
+const grassTerrainGLTF = await gltfLoader.loadAsync("./models/GrassTerrain/grassTerrain.glb");
 const grassTerrainScale = 86;
 grassTerrainGLTF.scene.scale.set(grassTerrainScale, grassTerrainScale, grassTerrainScale);
 grassTerrainGLTF.scene.position.set(0, 2.8, 0);
@@ -302,13 +308,13 @@ grassTerrainGLTF.scene.position.set(0, 2.8, 0);
 const grassTerrainColor = new THREE.Color(0xB1D18C); 
 
 // Map
-const grassColorMap = textureLoader.load("./models/grassTerrain/color.jpg");
+const grassColorMap = textureLoader.load("./models/GrassTerrain/color.jpg");
 grassColorMap.wrapS = grassColorMap.wrapT = THREE.RepeatWrapping;
 grassColorMap.repeat.set(16, 16);
 grassColorMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Normal
-const grassNormalMap = textureLoader.load("./models/grassTerrain/normal.png")
+const grassNormalMap = textureLoader.load("./models/GrassTerrain/normal.png")
 
 // Create material
 const grassTerrainMat = new THREE.MeshStandardMaterial({
@@ -445,15 +451,15 @@ const waterColor = new THREE.Color(0x65B6C7)
 
 // Water normal
 // From: https://www.cadhatch.com/seamless-water-textures?pgid=kw6kcyt6-4e83fdc6-6977-414d-8a89-4b9a61db15b4 
-const waterNormalsSubtle = textureLoader.load("./images/waterNormalsSubtle.jpg")
-waterNormalsSubtle.wrapS = waterNormalsSubtle.wrapT = THREE.RepeatWrapping;
+const waterNormals = textureLoader.load("./images/waterNormals.jpg")
+waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
 
 // Water options, argument in Water creation. 
 const waterOptions = {
   textureWidth:    1024,
   textureHeight:   1024,
   alpha:           0.8,
-  waterNormals:    waterNormalsSubtle,
+  waterNormals:    waterNormals,
   sunDirection:    sunlight.position.clone().normalize(),
   sunColor:        sunlight.color.clone(), 
   waterColor:      waterColor, 
@@ -708,6 +714,103 @@ function createRock(x, y, z) {
   setShadowProperties(rock, true, false);
 
   return rock;
+}
+
+
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Flowers >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+// Load object
+const flowerGLTF = await gltfLoader.loadAsync("./models/Flower.glb");
+
+// Change material properties
+flowerGLTF.scene.traverse(function (child) {
+  if(child.isMesh) {
+    child.material.roughness = 0.8; // Reduce shine
+  }
+});
+
+// Coordinates
+const flowerCoordinates = [
+  {x: 130,  y: 20, z: -15},
+  {x: 140,  y: 20, z: -40},
+  {x: 120,  y: 20, z: -60},
+  {x: 120,  y: 20, z: -85},
+  {x: 100,  y: 20, z: -120},
+  {x: 70,   y: 20, z: -110},
+  {x: 50,   y: 20, z: -140},
+
+  {x: -10,  y: 20, z: -130},
+  {x: -20,  y: 20, z: -150},
+  {x: -70,  y: 20, z: -125},
+  {x: -95,  y: 20, z: -125},
+  {x: -90,  y: 20, z: -100},
+  {x: -120,  y: 20, z: -90},
+  {x: -110,  y: 20, z: -65},
+  {x: -140,  y: 20, z: -70},
+  {x: -140,  y: 20, z: -45},
+  {x: -125,  y: 20, z: -30},
+  {x: -155,  y: 20, z: -10},
+
+  {x: -125,  y: 20, z: 25},
+  {x: -140,  y: 20, z: 50},
+  {x: -120,  y: 20, z: 60},
+  {x: -115,  y: 20, z: 95},
+  {x: -80,  y: 20, z: 110},
+  {x: -60,  y: 20, z: 135},
+  {x: -50,  y: 20, z: 125},
+  {x: -10,  y: 20, z: 145},
+
+  {x: 15,  y: 20, z: 155},
+  {x: 50,  y: 20, z: 130},
+  {x: 100,  y: 20, z: 110},
+  {x: 95,  y: 20, z: 90},
+  {x: 135,  y: 20, z: 80},
+  {x: 125,  y: 20, z: 40},
+  {x: 150,  y: 20, z: 20},
+];
+
+// Add
+flowerCoordinates.forEach(coord => {
+  let flower = createFlower(coord.x, coord.y, coord.z);
+  scene.add(flower);
+});
+
+
+/**
+ * Creates a clone of a flower .glb model and sets the position 
+ * to the specified (x, y, z) coordinate. 
+ * A random y-rotation is also applied, as well as a random scale. 
+ * 
+ * @param {number} x The x-position relative to the world. 
+ * @param {number} y The y-position relative to the world.  
+ * @param {number} z The z-position relative to the world. 
+ * @returns A flower mesh at the desired position. 
+ */
+function createFlower(x, y, z) {
+  let flower = flowerGLTF.scene.clone();
+
+  // Position
+  flower.position.set(x, y, z);
+  
+  // Scale
+  let minScale = 6;
+  let maxScale = 8;
+  let flowerScale = randFloat(minScale, maxScale);
+  flower.scale.set(flowerScale, flowerScale, flowerScale);
+  
+  // Rotation
+  let minRotation = 0;
+  let maxRotation = 360;
+  let rotation = degToRad(randFloat(minRotation, maxRotation));
+  flower.rotateY(rotation);
+
+  // Shadows
+  setShadowProperties(flower, true, false);
+
+  return flower;
 }
 
 
@@ -1306,14 +1409,18 @@ function render() {
   sunlight.getWorldPosition(lightWorldPos);
 
   // Disable light below the plane. 
-  if(lightWorldPos.y > 0) {
+  if(lightWorldPos.y > 100) {
     activeLight = sunlight;
     sunlight.intensity = sunlightIntensity;
     moonlight.intensity = 0;
+
+    scene.background = daySkybox;
   } else {
     activeLight = moonlight;
     moonlight.intensity = moonlightIntensity;
     sunlight.intensity = 0;
+
+    scene.background = nightSkybox;
   }
 
 
