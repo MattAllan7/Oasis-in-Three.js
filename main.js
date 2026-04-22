@@ -182,8 +182,8 @@ sunlight.position.set(-2100, 0, -2100);
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
 sunlight.castShadow = true;
-sunlight.shadow.mapSize.width = 4096;
-sunlight.shadow.mapSize.height = 4096;
+sunlight.shadow.mapSize.width = 2048;
+sunlight.shadow.mapSize.height = 2048;
 sunlight.shadow.camera.top = 3000;
 sunlight.shadow.camera.bottom = -3000;
 sunlight.shadow.camera.left = -3000;
@@ -201,8 +201,8 @@ moonlight.position.set(2100, 0, 2100);
 // Shadows
 // From user Drew Noakes: https://stackoverflow.com/questions/10742149/how-to-create-directional-light-shadow-in-three-js
 moonlight.castShadow = true;
-moonlight.shadow.mapSize.width = 4096;
-moonlight.shadow.mapSize.height = 4096;
+moonlight.shadow.mapSize.width = 2048;
+moonlight.shadow.mapSize.height = 2048;
 moonlight.shadow.camera.top = 3000;
 moonlight.shadow.camera.bottom = -3000;
 moonlight.shadow.camera.left = -3000;
@@ -278,8 +278,8 @@ const textureLoader = new THREE.TextureLoader();
 // Sand geometry
 const sandPlaneWidth = 4096;
 const sandPlaneHeight = 4096;
-const sandPlaneWidthSeg = 1024;
-const sandPlaneHeightSeg = 1024;
+const sandPlaneWidthSeg = 512;
+const sandPlaneHeightSeg = 512;
 const sandGeo = new THREE.PlaneGeometry(
   sandPlaneWidth, 
   sandPlaneHeight, 
@@ -1176,15 +1176,17 @@ class ParticleEmitter {
    * Removes particles that have exceeded their 1-second lifetime, then calls update() on the rest.
    */
   updateParticles() {
-    this.particles.forEach((particle) => {
+    this.particles = this.particles.filter((particle) => {
       particle.currentTime = timerScene.getElapsed();
       
       if((particle.currentTime - particle.startTime) > 1) { // 1 second is the lifetime. 
         this.group.remove(particle);
         particle.material.dispose();
+        return false;
       }
       
       particle.update();
+      return true;
     });
   }
 
@@ -1479,11 +1481,16 @@ function render() {
 
   // Animate shaders
   // From https://github.com/mrdoob/three.js/blob/master/examples/webgl_shaders_ocean.html
-  water.material.uniforms['time'].value += timerScene.getDelta();
-  grassMat.uniforms['time'].value += timerScene.getDelta();
+  let delta = timerScene.getDelta();
+  water.material.uniforms['time'].value += delta;
+  grassMat.uniforms['time'].value += delta;
 
 
-  particleEmitter.emitParticle();
+  // Particles
+  if(Math.random() < 0.5) {
+    particleEmitter.emitParticle(); // Emit 50% of the frames. 
+  }
+
   particleEmitter.updateParticles();
 
 
