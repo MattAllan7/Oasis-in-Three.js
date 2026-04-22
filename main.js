@@ -296,7 +296,7 @@ scene.add(sandMesh);
 // Texture from: https://www.poliigon.com/texture/flat-grass-texture/4585
 
 // GLTF
-const grassTerrainGLTF = await gltfLoader.loadAsync("./models/GrassTerrain/grassTerrain.glb");
+const grassTerrainGLTF = await gltfLoader.loadAsync("./models/grassTerrain/grassTerrain.glb");
 const grassTerrainScale = 1;
 grassTerrainGLTF.scene.scale.set(grassTerrainScale, grassTerrainScale, grassTerrainScale);
 grassTerrainGLTF.scene.position.set(0, 16, 0);
@@ -308,13 +308,13 @@ grassTerrainGLTF.scene.position.set(0, 16, 0);
 const grassTerrainColor = new THREE.Color(0xB1D18C); 
 
 // Map
-const grassColorMap = textureLoader.load("./models/GrassTerrain/map.jpg");
+const grassColorMap = textureLoader.load("./models/grassTerrain/map.jpg");
 grassColorMap.wrapS = grassColorMap.wrapT = THREE.RepeatWrapping;
 grassColorMap.repeat.set(16, 16);
 grassColorMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
 // Normal
-const grassNormalMap = textureLoader.load("./models/GrassTerrain/normal.png")
+const grassNormalMap = textureLoader.load("./models/grassTerrain/normal.png")
 
 // Create material
 const grassTerrainMat = new THREE.MeshStandardMaterial({
@@ -921,7 +921,7 @@ scene.add(tentGLTF.scene);
 // Logs
 
 // Load object
-const logsGLTF = await gltfLoader.loadAsync("./models/Campfire.glb");
+const logsGLTF = await gltfLoader.loadAsync("./models/CampFire.glb");
 
 // Change material properties 
 logsGLTF.scene.traverse(function (child) {
