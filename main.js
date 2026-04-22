@@ -50,6 +50,19 @@ document.body.appendChild(renderer.domElement);
 
 
 
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Skybox >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+
+
+
+const cubeTextureLoader = new THREE.CubeTextureLoader().setPath('images/skyboxDay/');
+const skyboxTexture = await cubeTextureLoader.loadAsync([
+  'DayFront.png', 'DayBack.png', 'DayTop.png', 
+  'DayBottom.png', 'DayRight.png', 'DayLeft.png'
+]);
+scene.background = skyboxTexture;
+
+
+
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Camera Controls >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 
@@ -866,7 +879,7 @@ scene.add(pointLightHelper);
 // Texture from: https://www.freeiconspng.com/img/42438 
 
 // Load the fire sprite texture and set its colour space for correct rendering
-const fireTexture = new THREE.TextureLoader().load("./images/fireParticle2.png");
+const fireTexture = new THREE.TextureLoader().load("./images/fireParticle.png");
 fireTexture.colorSpace = THREE.SRGBColorSpace;
 
 /**
