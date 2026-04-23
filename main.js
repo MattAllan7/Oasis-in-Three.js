@@ -244,7 +244,7 @@ const moonlightShadowHelper = new THREE.CameraHelper(moonlight.shadow.camera);
 
 
 
-// https://sbcode.net/threejs/dat-gui-module/
+// From: https://sbcode.net/threejs/dat-gui-module/
 
 
 const gui = new GUI({width: 470});
@@ -1219,6 +1219,10 @@ const particleEmitter = new ParticleEmitter(
 
 particleEmitter.group.position.set(-20, 28, -220);
 
+// Used in render loop for framerate independent emitting. 
+let particleEmitAccumulator = 0;
+const PARTICLES_PER_SECOND = 60;
+
 
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Pyramid >>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
@@ -1489,8 +1493,13 @@ function render() {
 
 
   // Particles
-  if(Math.random() < 0.5) {
-    particleEmitter.emitParticle(); // Emit 50% of the frames. 
+
+  // Emit at a fixed rate regardless of framerate
+  particleEmitAccumulator += delta;
+  const emitInterval = 1 / PARTICLES_PER_SECOND;
+  while(particleEmitAccumulator >= emitInterval) {
+    particleEmitter.emitParticle();
+    particleEmitAccumulator -= emitInterval;
   }
 
   particleEmitter.updateParticles(delta);
@@ -1499,7 +1508,7 @@ function render() {
   // Fish
 
   let fishOrbitSpeed = 10;
-  rotateSchool(degToRad(-fishOrbitSpeed * timerScene.getDelta()));
+  rotateSchool(degToRad(-fishOrbitSpeed * delta));
   
   let fishSwimSpeed = 20;
   swim(fishSwimSpeed * timerScene.getElapsed());
