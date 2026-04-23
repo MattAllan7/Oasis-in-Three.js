@@ -96,6 +96,7 @@ const lighting = {
 
 document.addEventListener('click', function () {cameraControls.lock();}, false);
 
+// On press
 document.addEventListener('keydown', function (event) {
   switch (event.code) {
     case 'KeyW': movement.forward  = true; break;
@@ -111,6 +112,7 @@ document.addEventListener('keydown', function (event) {
   }
 });  
 
+// On release
 document.addEventListener('keyup', function (event) {
   switch (event.code) {
     case 'KeyW': movement.forward  = false; break;
@@ -153,7 +155,7 @@ function updateInput() {
   // Lighting
 
   if (lighting.lightUp)   directionalGroup.rotation.x = Math.min(Math.PI * 4, directionalGroup.rotation.x + lightRotateSpeed * delta);
-  if (lighting.lightDown) directionalGroup.rotation.x = Math.max(0,           directionalGroup.rotation.x - lightRotateSpeed * delta);
+  if (lighting.lightDown) directionalGroup.rotation.x = Math.max(0, directionalGroup.rotation.x - lightRotateSpeed * delta);
 }
 
 
@@ -194,7 +196,7 @@ sunlight.shadow.camera.updateProjectionMatrix();
 
 // Moonlight
 const moonlightColor = new THREE.Color(0x707980);
-const moonlightIntensity = 2;
+const moonlightIntensity = 1;
 const moonlight = new THREE.DirectionalLight(moonlightColor, moonlightIntensity);
 moonlight.position.set(2100, 0, 2100);
 
@@ -495,7 +497,7 @@ waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;
 const waterOptions = {
   textureWidth:    1024,
   textureHeight:   1024,
-  alpha:           0.8,
+  alpha:           0.7,
   waterNormals:    waterNormals,
   sunDirection:    sunlight.position.clone().normalize(),
   sunColor:        sunlight.color.clone(), 
@@ -1100,10 +1102,10 @@ class CustomParticle extends THREE.Sprite {
    * Called every frame by the emitter.
    * Moves the particle upward, applies rotation, and transitions its colour.
    */
-  update() {
+  update(delta) {
   
     // Float
-    this.position.y += 0.25;
+    this.position.y += 30 * delta;
 
     // Sync
     this.updateMatrix();
@@ -1175,7 +1177,7 @@ class ParticleEmitter {
    * Iterates all live particles each frame.
    * Removes particles that have exceeded their 1-second lifetime, then calls update() on the rest.
    */
-  updateParticles() {
+  updateParticles(delta) {
     this.particles = this.particles.filter((particle) => {
       particle.currentTime = timerScene.getElapsed();
       
@@ -1185,7 +1187,7 @@ class ParticleEmitter {
         return false;
       }
       
-      particle.update();
+      particle.update(delta);
       return true;
     });
   }
@@ -1491,7 +1493,7 @@ function render() {
     particleEmitter.emitParticle(); // Emit 50% of the frames. 
   }
 
-  particleEmitter.updateParticles();
+  particleEmitter.updateParticles(delta);
 
 
   // Fish
